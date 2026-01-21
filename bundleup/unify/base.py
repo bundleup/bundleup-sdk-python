@@ -1,0 +1,109 @@
+"""Base class for BundleUp Unify API."""
+
+from typing import Any, Dict, List, Optional, TypedDict
+import requests
+
+from ..utils import validate_non_empty_string
+
+
+class Params(TypedDict, total=False):
+    """Query parameters for Unify API requests."""
+    limit: int
+    after: str
+    include_raw: bool
+
+
+class Metadata(TypedDict, total=False):
+    """Metadata for paginated responses."""
+    has_more: bool
+    next_cursor: Optional[str]
+
+
+class Response(TypedDict):
+    """Unify API response structure."""
+    data: List[Dict[str, Any]]
+    _raw: Optional[List[Dict[str, Any]]]
+    metadata: Metadata
+
+
+class UnifyBase:
+    """Base class for Unify API resources."""
+    
+    base_url: str = "https://unify.bundleup.io"
+    
+    def __init__(self, api_key: str, connection_id: str):
+        """
+        Initialize the Unify base client.
+        
+        Args:
+            api_key: The BundleUp API key
+            connection_id: The connection ID
+            
+        Raises:
+            ValueError: If api_key or connection_id are invalid
+        """
+        validate_non_empty_string(api_key, "api_key")
+        validate_non_empty_string(connection_id, "connection_id")
+        self._api_key = api_key
+        self._connection_id = connection_id
+    
+    @property
+    def _headers(self) -> Dict[str, str]:
+        """
+        Get headers for Unify API requests.
+        
+        Returns:
+            Dictionary of HTTP headers
+        """
+        return {
+            "Authorization": f"Bearer {self._api_key}",
+            "BU-Connection-Id": self._connection_id,
+            "Content-Type": "application/json",
+        }
+    
+    def _build_url(self, path: str) -> str:
+        """
+        Build the full Unify API URL.
+        
+        Args:
+            path: The API path
+            
+        Returns:
+            The complete Unify API URL
+        """
+        # Ensure path starts with /
+        if not path.startswith("/"):
+            path = f"/{path}"
+        return f"{self.base_url}{path}"
+    
+    def _request(self, path: str, params: Optional[Params] = None) -> Response:
+        """
+        Make a request to the Unify API.
+        
+        Args:
+            path: The API path
+            params: Optional query parameters
+            
+        Returns:
+            The Unify API response
+            
+        Raises:
+            RuntimeError: If the request fails
+        """
+        url = self._build_url(path)
+        query_params = {}
+        
+        if params:
+            if "limit" in params:
+                query_params["limit"] = params["limit"]
+            if "after" in params:
+                query_params["after"] = params["after"]
+            if "include_raw" in params:
+                query_params["include_raw"] = str(params["include_raw"]).lower()
+        
+        try:
+            response = requests.get(url, headers=self._headers, params=query_params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Unify API request failed: {str(e)}")
