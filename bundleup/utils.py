@@ -1,6 +1,7 @@
 """BundleUp Python SDK utilities."""
 
 from typing import Any, Dict
+from .exceptions import ValidationError
 
 
 def validate_non_empty_string(value: Any, param_name: str) -> None:
@@ -12,12 +13,12 @@ def validate_non_empty_string(value: Any, param_name: str) -> None:
         param_name: The parameter name for error messages
         
     Raises:
-        ValueError: If the value is not a non-empty string
+        ValidationError: If the value is not a non-empty string
     """
     if not isinstance(value, str):
-        raise ValueError(f"{param_name} must be a string")
+        raise ValidationError(f"{param_name} must be a string")
     if not value.strip():
-        raise ValueError(f"{param_name} cannot be empty")
+        raise ValidationError(f"{param_name} cannot be empty")
 
 
 def validate_dict(value: Any, param_name: str) -> None:
@@ -29,10 +30,10 @@ def validate_dict(value: Any, param_name: str) -> None:
         param_name: The parameter name for error messages
         
     Raises:
-        ValueError: If the value is not a dictionary
+        ValidationError: If the value is not a dictionary
     """
     if not isinstance(value, dict):
-        raise ValueError(f"{param_name} must be a dictionary")
+        raise ValidationError(f"{param_name} must be a dictionary")
 
 
 def merge_headers(*headers: Dict[str, str]) -> Dict[str, str]:

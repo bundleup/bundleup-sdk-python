@@ -8,14 +8,29 @@ Official Python SDK for the BundleUp API.
 pip install bundleup-sdk
 ```
 
+## Features
+
+- **Pythonic API Design** - Context managers, property decorators, and Python best practices
+- **Custom Exception Hierarchy** - Specific exception types for different error scenarios
+- **Connection Pooling** - Efficient HTTP connection reuse with `requests.Session`
+- **Type Hints** - Full type annotation support for better IDE integration
+- **Comprehensive Testing** - 70+ unit tests with mocked HTTP requests
+
 ## Usage
 
 ### Initialize the Client
 
+The SDK supports both regular initialization and context manager usage:
+
 ```python
 from bundleup import BundleUp
 
+# Regular usage
 client = BundleUp("your-api-key")
+
+# Context manager (automatically closes connections)
+with BundleUp("your-api-key") as client:
+    connections = client.connections.list()
 ```
 
 ### Working with Connections
@@ -96,6 +111,12 @@ The Unify API provides a standardized interface across different integrations.
 ```python
 # Get unified chat channels
 channels = client.unify("connection-id").chat.channels()
+
+# With pagination parameters
+channels = client.unify("connection-id").chat.channels({
+    "limit": 50,
+    "include_raw": True
+})
 ```
 
 #### Git
@@ -121,6 +142,68 @@ releases = unify.git.releases()
 ```python
 # Get issues
 issues = client.unify("connection-id").pm.issues()
+
+# With pagination
+issues = client.unify("connection-id").pm.issues({
+    "limit": 100,
+    "after": "cursor-id"
+})
+```
+
+## Error Handling
+
+The SDK uses a hierarchy of custom exceptions:
+
+```python
+from bundleup import BundleUp
+from bundleup.exceptions import (
+    BundleUpError,          # Base exception
+    ValidationError,        # Input validation errors
+    APIError,              # General API errors
+    AuthenticationError,   # 401 errors
+    NotFoundError,        # 404 errors
+    RateLimitError        # 429 errors
+)
+
+try:
+    client = BundleUp("your-api-key")
+    connections = client.connections.list()
+except AuthenticationError:
+    print("Invalid API key")
+except NotFoundError:
+    print("Resource not found")
+except RateLimitError:
+    print("Rate limit exceeded")
+except APIError as e:
+    print(f"API error: {e.status_code} - {e}")
+except ValidationError as e:
+    print(f"Validation error: {e}")
+```
+
+## Advanced Usage
+
+### Custom Session
+
+You can provide your own `requests.Session` for advanced configuration:
+
+```python
+import requests
+from bundleup import BundleUp
+
+session = requests.Session()
+session.timeout = 30
+session.verify = True
+
+client = BundleUp("your-api-key", session=session)
+```
+
+### Query Parameters
+
+The `list()` method supports query parameters:
+
+```python
+# List with filters
+connections = client.connections.list(status="active", limit=50)
 ```
 
 ## Requirements

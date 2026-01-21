@@ -3,6 +3,7 @@
 import pytest
 import responses
 from bundleup.base import Base
+from bundleup.exceptions import ValidationError, APIError, AuthenticationError, NotFoundError
 
 
 class TestResource(Base):
@@ -20,8 +21,8 @@ def test_base_init_with_valid_api_key():
 
 
 def test_base_init_with_empty_api_key():
-    """Test Base initialization with empty API key raises ValueError."""
-    with pytest.raises(ValueError, match="api_key cannot be empty"):
+    """Test Base initialization with empty API key raises ValidationError."""
+    with pytest.raises(ValidationError, match="api_key cannot be empty"):
         TestResource("")
 
 
@@ -82,7 +83,7 @@ def test_base_create():
 def test_base_create_with_invalid_data():
     """Test create method with invalid data."""
     resource = TestResource("test-api-key")
-    with pytest.raises(ValueError, match="data must be a dictionary"):
+    with pytest.raises(ValidationError, match="data must be a dictionary"):
         resource.create("not-a-dict")
 
 
@@ -104,7 +105,7 @@ def test_base_retrieve():
 def test_base_retrieve_with_empty_id():
     """Test retrieve method with empty ID."""
     resource = TestResource("test-api-key")
-    with pytest.raises(ValueError, match="id cannot be empty"):
+    with pytest.raises(ValidationError, match="id cannot be empty"):
         resource.retrieve("")
 
 
@@ -126,14 +127,14 @@ def test_base_update():
 def test_base_update_with_empty_id():
     """Test update method with empty ID."""
     resource = TestResource("test-api-key")
-    with pytest.raises(ValueError, match="id cannot be empty"):
+    with pytest.raises(ValidationError, match="id cannot be empty"):
         resource.update("", {"name": "test"})
 
 
 def test_base_update_with_invalid_data():
     """Test update method with invalid data."""
     resource = TestResource("test-api-key")
-    with pytest.raises(ValueError, match="data must be a dictionary"):
+    with pytest.raises(ValidationError, match="data must be a dictionary"):
         resource.update("123", "not-a-dict")
 
 
@@ -153,5 +154,42 @@ def test_base_delete():
 def test_base_delete_with_empty_id():
     """Test delete method with empty ID."""
     resource = TestResource("test-api-key")
-    with pytest.raises(ValueError, match="id cannot be empty"):
+    with pytest.raises(ValidationError, match="id cannot be empty"):
         resource.delete("")
+
+
+@responses.activate
+def test_base_authentication_error():
+    """Test authentication error handling."""
+    responses.add(
+        responses.GET,
+        "https://api.bundleup.io/v1/test-resources",
+        json={"error": "Unauthorized"},
+        status=401
+    )
+    
+    resource = TestResource("test-api-key")
+    with pytest.raises(AuthenticationError):
+        resource.list()
+
+
+@responses.activate
+def test_base_not_found_error():
+    """Test not found error handling."""
+    responses.add(
+        responses.GET,
+        "https://api.bundleup.io/v1/test-resources/999",
+        json={"error": "Not found"},
+        status=404
+    )
+    
+    resource = TestResource("test-api-key")
+    with pytest.raises(NotFoundError):
+        resource.retrieve("999")
+
+
+def test_base_repr():
+    """Test __repr__ method."""
+    resource = TestResource("test-api-key")
+    assert "TestResource" in repr(resource)
+    assert "test-resources" in repr(resource)

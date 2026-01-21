@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 import requests
 
 from .utils import validate_non_empty_string
+from .exceptions import APIError
 
 
 class Proxy:
@@ -11,21 +12,23 @@ class Proxy:
     
     base_url: str = "https://proxy.bundleup.io"
     
-    def __init__(self, api_key: str, connection_id: str):
+    def __init__(self, api_key: str, connection_id: str, session: Optional[requests.Session] = None):
         """
         Initialize the Proxy client.
         
         Args:
             api_key: The BundleUp API key
             connection_id: The connection ID to proxy requests through
+            session: Optional requests session for connection pooling
             
         Raises:
-            ValueError: If api_key or connection_id are invalid
+            ValidationError: If api_key or connection_id are invalid
         """
         validate_non_empty_string(api_key, "api_key")
         validate_non_empty_string(connection_id, "connection_id")
         self._api_key = api_key
         self._connection_id = connection_id
+        self._session = session or requests.Session()
     
     def _get_headers(self, additional_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         """
@@ -61,32 +64,56 @@ class Proxy:
             path = f"/{path}"
         return f"{self.base_url}{path}"
     
-    def get(self, path: str, headers: Optional[Dict[str, str]] = None) -> Any:
+    def _handle_response(self, response: requests.Response) -> Any:
+        """
+        Handle proxy response and raise appropriate exceptions.
+        
+        Args:
+            response: The response object from requests
+            
+        Returns:
+            Parsed JSON response or None
+            
+        Raises:
+            APIError: If the request fails
+        """
+        try:
+            response.raise_for_status()
+            return response.json() if response.text else None
+        except requests.exceptions.RequestException as e:
+            try:
+                error_body = response.text
+            except:
+                error_body = None
+            raise APIError(
+                f"Proxy request failed: {str(e)}",
+                status_code=response.status_code if hasattr(response, 'status_code') else None,
+                response_body=error_body
+            )
+    
+    def get(self, path: str, headers: Optional[Dict[str, str]] = None, **kwargs) -> Any:
         """
         Make a GET request through the proxy.
         
         Args:
             path: The API path
             headers: Optional additional headers
+            **kwargs: Additional arguments passed to requests.get
             
         Returns:
             The response data
             
         Raises:
-            ValueError: If path is invalid
-            RuntimeError: If the request fails
+            ValidationError: If path is invalid
+            APIError: If the request fails
         """
         validate_non_empty_string(path, "path")
         url = self._build_url(path)
-        try:
-            response = requests.get(url, headers=self._get_headers(headers))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Proxy GET request failed: {str(e)}")
+        response = self._session.get(url, headers=self._get_headers(headers), **kwargs)
+        return self._handle_response(response)
     
     def post(self, path: str, data: Optional[Dict[str, Any]] = None, 
-             headers: Optional[Dict[str, str]] = None) -> Any:
+             headers: Optional[Dict[str, str]] = None, **kwargs) -> Any:
         """
         Make a POST request through the proxy.
         
@@ -94,25 +121,22 @@ class Proxy:
             path: The API path
             data: Optional request body data
             headers: Optional additional headers
+            **kwargs: Additional arguments passed to requests.post
             
         Returns:
             The response data
             
         Raises:
-            ValueError: If path is invalid
-            RuntimeError: If the request fails
+            ValidationError: If path is invalid
+            APIError: If the request fails
         """
         validate_non_empty_string(path, "path")
         url = self._build_url(path)
-        try:
-            response = requests.post(url, json=data, headers=self._get_headers(headers))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Proxy POST request failed: {str(e)}")
+        response = self._session.post(url, json=data, headers=self._get_headers(headers), **kwargs)
+        return self._handle_response(response)
     
     def put(self, path: str, data: Optional[Dict[str, Any]] = None,
-            headers: Optional[Dict[str, str]] = None) -> Any:
+            headers: Optional[Dict[str, str]] = None, **kwargs) -> Any:
         """
         Make a PUT request through the proxy.
         
@@ -120,25 +144,22 @@ class Proxy:
             path: The API path
             data: Optional request body data
             headers: Optional additional headers
+            **kwargs: Additional arguments passed to requests.put
             
         Returns:
             The response data
             
         Raises:
-            ValueError: If path is invalid
-            RuntimeError: If the request fails
+            ValidationError: If path is invalid
+            APIError: If the request fails
         """
         validate_non_empty_string(path, "path")
         url = self._build_url(path)
-        try:
-            response = requests.put(url, json=data, headers=self._get_headers(headers))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Proxy PUT request failed: {str(e)}")
+        response = self._session.put(url, json=data, headers=self._get_headers(headers), **kwargs)
+        return self._handle_response(response)
     
     def patch(self, path: str, data: Optional[Dict[str, Any]] = None,
-              headers: Optional[Dict[str, str]] = None) -> Any:
+              headers: Optional[Dict[str, str]] = None, **kwargs) -> Any:
         """
         Make a PATCH request through the proxy.
         
@@ -146,46 +167,41 @@ class Proxy:
             path: The API path
             data: Optional request body data
             headers: Optional additional headers
+            **kwargs: Additional arguments passed to requests.patch
             
         Returns:
             The response data
             
         Raises:
-            ValueError: If path is invalid
-            RuntimeError: If the request fails
+            ValidationError: If path is invalid
+            APIError: If the request fails
         """
         validate_non_empty_string(path, "path")
         url = self._build_url(path)
-        try:
-            response = requests.patch(url, json=data, headers=self._get_headers(headers))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Proxy PATCH request failed: {str(e)}")
+        response = self._session.patch(url, json=data, headers=self._get_headers(headers), **kwargs)
+        return self._handle_response(response)
     
-    def delete(self, path: str, headers: Optional[Dict[str, str]] = None) -> Any:
+    def delete(self, path: str, headers: Optional[Dict[str, str]] = None, **kwargs) -> Any:
         """
         Make a DELETE request through the proxy.
         
         Args:
             path: The API path
             headers: Optional additional headers
+            **kwargs: Additional arguments passed to requests.delete
             
         Returns:
-            The response data
+            The response data or None
             
         Raises:
-            ValueError: If path is invalid
-            RuntimeError: If the request fails
+            ValidationError: If path is invalid
+            APIError: If the request fails
         """
         validate_non_empty_string(path, "path")
         url = self._build_url(path)
-        try:
-            response = requests.delete(url, headers=self._get_headers(headers))
-            response.raise_for_status()
-            # DELETE may return empty response
-            if response.text:
-                return response.json()
-            return None
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Proxy DELETE request failed: {str(e)}")
+        response = self._session.delete(url, headers=self._get_headers(headers), **kwargs)
+        return self._handle_response(response)
+    
+    def __repr__(self) -> str:
+        """Return a string representation of the proxy."""
+        return f"Proxy(connection_id='{self._connection_id}')"

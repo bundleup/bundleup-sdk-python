@@ -1,7 +1,7 @@
 """Tests for the main BundleUp client."""
 
 import pytest
-from bundleup import BundleUp
+from bundleup import BundleUp, ValidationError
 from bundleup.connection import Connections
 from bundleup.integration import Integrations
 from bundleup.webhooks import Webhooks
@@ -16,14 +16,14 @@ def test_bundleup_init_with_valid_api_key():
 
 
 def test_bundleup_init_with_empty_api_key():
-    """Test BundleUp initialization with empty API key raises ValueError."""
-    with pytest.raises(ValueError, match="api_key cannot be empty"):
+    """Test BundleUp initialization with empty API key raises ValidationError."""
+    with pytest.raises(ValidationError, match="api_key cannot be empty"):
         BundleUp("")
 
 
 def test_bundleup_init_with_none_api_key():
-    """Test BundleUp initialization with None API key raises ValueError."""
-    with pytest.raises(ValueError, match="api_key must be a string"):
+    """Test BundleUp initialization with None API key raises ValidationError."""
+    with pytest.raises(ValidationError, match="api_key must be a string"):
         BundleUp(None)
 
 
@@ -54,9 +54,9 @@ def test_bundleup_proxy_method():
 
 
 def test_bundleup_proxy_method_with_empty_connection_id():
-    """Test proxy method with empty connection_id raises ValueError."""
+    """Test proxy method with empty connection_id raises ValidationError."""
     client = BundleUp("test-api-key")
-    with pytest.raises(ValueError, match="connection_id cannot be empty"):
+    with pytest.raises(ValidationError, match="connection_id cannot be empty"):
         client.proxy("")
 
 
@@ -69,7 +69,21 @@ def test_bundleup_unify_method():
 
 
 def test_bundleup_unify_method_with_empty_connection_id():
-    """Test unify method with empty connection_id raises ValueError."""
+    """Test unify method with empty connection_id raises ValidationError."""
     client = BundleUp("test-api-key")
-    with pytest.raises(ValueError, match="connection_id cannot be empty"):
+    with pytest.raises(ValidationError, match="connection_id cannot be empty"):
         client.unify("")
+
+
+def test_bundleup_context_manager():
+    """Test BundleUp can be used as context manager."""
+    with BundleUp("test-api-key") as client:
+        assert client._api_key == "test-api-key"
+        assert client._session is not None
+
+
+def test_bundleup_repr():
+    """Test BundleUp __repr__ method."""
+    client = BundleUp("test-api-key")
+    assert "BundleUp" in repr(client)
+    assert "0.1.0" in repr(client)

@@ -3,6 +3,7 @@
 import pytest
 import responses
 from bundleup.proxy import Proxy
+from bundleup.exceptions import ValidationError, APIError
 
 
 def test_proxy_init_with_valid_parameters():
@@ -13,14 +14,14 @@ def test_proxy_init_with_valid_parameters():
 
 
 def test_proxy_init_with_empty_api_key():
-    """Test Proxy initialization with empty API key raises ValueError."""
-    with pytest.raises(ValueError, match="api_key cannot be empty"):
+    """Test Proxy initialization with empty API key raises ValidationError."""
+    with pytest.raises(ValidationError, match="api_key cannot be empty"):
         Proxy("", "connection-id")
 
 
 def test_proxy_init_with_empty_connection_id():
-    """Test Proxy initialization with empty connection_id raises ValueError."""
-    with pytest.raises(ValueError, match="connection_id cannot be empty"):
+    """Test Proxy initialization with empty connection_id raises ValidationError."""
+    with pytest.raises(ValidationError, match="connection_id cannot be empty"):
         Proxy("test-api-key", "")
 
 
@@ -70,9 +71,9 @@ def test_proxy_get():
 
 
 def test_proxy_get_with_empty_path():
-    """Test GET with empty path raises ValueError."""
+    """Test GET with empty path raises ValidationError."""
     proxy = Proxy("test-api-key", "connection-id")
-    with pytest.raises(ValueError, match="path cannot be empty"):
+    with pytest.raises(ValidationError, match="path cannot be empty"):
         proxy.get("")
 
 
@@ -148,3 +149,10 @@ def test_proxy_delete_with_json_response():
     proxy = Proxy("test-api-key", "connection-id")
     result = proxy.delete("/users/123")
     assert result["success"] is True
+
+
+def test_proxy_repr():
+    """Test __repr__ method."""
+    proxy = Proxy("test-api-key", "connection-id")
+    assert "Proxy" in repr(proxy)
+    assert "connection-id" in repr(proxy)

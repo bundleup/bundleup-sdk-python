@@ -2,6 +2,7 @@
 
 import pytest
 from bundleup.utils import validate_non_empty_string, validate_dict, merge_headers
+from bundleup.exceptions import ValidationError
 
 
 def test_validate_non_empty_string_with_valid_string():
@@ -11,19 +12,19 @@ def test_validate_non_empty_string_with_valid_string():
 
 def test_validate_non_empty_string_with_empty_string():
     """Test validate_non_empty_string with empty string."""
-    with pytest.raises(ValueError, match="param cannot be empty"):
+    with pytest.raises(ValidationError, match="param cannot be empty"):
         validate_non_empty_string("", "param")
 
 
 def test_validate_non_empty_string_with_whitespace_only():
     """Test validate_non_empty_string with whitespace only."""
-    with pytest.raises(ValueError, match="param cannot be empty"):
+    with pytest.raises(ValidationError, match="param cannot be empty"):
         validate_non_empty_string("   ", "param")
 
 
 def test_validate_non_empty_string_with_non_string():
     """Test validate_non_empty_string with non-string."""
-    with pytest.raises(ValueError, match="param must be a string"):
+    with pytest.raises(ValidationError, match="param must be a string"):
         validate_non_empty_string(123, "param")
 
 
@@ -39,7 +40,7 @@ def test_validate_dict_with_empty_dict():
 
 def test_validate_dict_with_non_dict():
     """Test validate_dict with non-dictionary."""
-    with pytest.raises(ValueError, match="param must be a dictionary"):
+    with pytest.raises(ValidationError, match="param must be a dictionary"):
         validate_dict("not a dict", "param")
 
 
