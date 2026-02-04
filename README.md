@@ -48,11 +48,6 @@ connection = client.connections.create({
 # Retrieve a specific connection
 connection = client.connections.retrieve("connection-id")
 
-# Update a connection
-updated = client.connections.update("connection-id", {
-    "name": "Updated Name"
-})
-
 # Delete a connection
 client.connections.delete("connection-id")
 ```
