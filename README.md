@@ -1,5 +1,8 @@
 # BundleUp Python SDK
 
+[![PyPI version](https://badge.fury.io/py/bundleup-sdk.svg)](https://badge.fury.io/py/bundleup-sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Official Python SDK for the BundleUp API.
 
 ## Installation
