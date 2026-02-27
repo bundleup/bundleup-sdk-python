@@ -11,6 +11,7 @@ Official Python SDK for the [BundleUp](https://bundleup.io) API. Connect to 100+
 - [Installation](#installation)
 - [Requirements](#requirements)
 - [Features](#features)
+- [Examples](#examples)
 - [Quick Start](#quick-start)
 - [Authentication](#authentication)
 - [Core Concepts](#core-concepts)
@@ -75,6 +76,15 @@ The BundleUp SDK is tested and supported on:
 - 📚 **Well Documented** - Extensive documentation and examples
 - 🔍 **Type Hints** - Full type annotations for better IDE support
 - 🧪 **Tested** - Comprehensive test suite with pytest
+
+## Examples
+
+Runnable examples are available in the [`examples/`](./examples) directory:
+
+- [`examples/basic_usage.py`](./examples/basic_usage.py) - Client setup, connections, integrations, and webhooks
+- [`examples/proxy_api.py`](./examples/proxy_api.py) - Proxy API GET request with a connection
+- [`examples/unify_api.py`](./examples/unify_api.py) - Unify Chat, Git, and PM endpoint usage
+- [`examples/README.md`](./examples/README.md) - Setup and execution instructions
 
 ## Quick Start
 
