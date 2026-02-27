@@ -513,7 +513,7 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    signature = request.headers.get('X-Bundleup-Signature')
+    signature = request.headers.get('Bundleup-Signature')
     payload = request.get_data()
 
     if not verify_signature(payload, signature):
@@ -562,7 +562,7 @@ def bundleup_webhook(request):
     if request.method != 'POST':
         return HttpResponseForbidden()
 
-    signature = request.META.get('HTTP_X_BUNDLEUP_SIGNATURE')
+    signature = request.META.get('HTTP_BUNDLEUP_SIGNATURE')
     payload = request.body
 
     if not verify_signature(payload, signature):
@@ -1147,7 +1147,7 @@ We welcome contributions to the BundleUp Python SDK! Here's how you can help:
 This package is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
 
 ```
-Copyright (c) 2024 BundleUp
+Copyright (c) 2026 BundleUp
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
