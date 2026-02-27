@@ -1,23 +1,15 @@
-"""BundleUp Unify Chat API."""
-
-from typing import Optional
-from .base import UnifyBase, Params, Response
+from .base import Base
 
 
-class Chat(UnifyBase):
-    """Chat unify methods for standardized chat operations."""
-    
-    def channels(self, params: Optional[Params] = None) -> Response:
+class Chat(Base):
+    def channels(self, params: dict = None):
         """
-        Get unified chat channels.
-        
-        Args:
-            params: Optional query parameters (limit, after, include_raw)
-            
-        Returns:
-            Unified response with chat channels
-            
-        Raises:
-            RuntimeError: If the request fails
+        List chat channels
         """
-        return self._request("/chat/channels", params)
+        url = self._build_url("chat/channels")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            raise Exception(f"Failed to fetch chat/channels: {response.status_code}")
+
+        return response.json()

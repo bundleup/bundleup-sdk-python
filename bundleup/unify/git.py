@@ -1,68 +1,56 @@
-"""BundleUp Unify Git API."""
+from urllib.parse import quote
 
-from typing import Optional
-from .base import UnifyBase, Params, Response
+from .base import Base
 
 
-class Git(UnifyBase):
-    """Git unify methods for standardized git operations."""
-    
-    def repos(self, params: Optional[Params] = None) -> Response:
+class Git(Base):
+    def repos(self, params: dict = None):
         """
-        Get unified git repositories.
-        
-        Args:
-            params: Optional query parameters (limit, after, include_raw)
-            
-        Returns:
-            Unified response with repositories
-            
-        Raises:
-            RuntimeError: If the request fails
+        List git repositories
         """
-        return self._request("/git/repos", params)
-    
-    def pulls(self, params: Optional[Params] = None) -> Response:
+        url = self._build_url("git/repos")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            raise Exception(f"Failed to fetch git/repos: {response.status_code}")
+
+        return response.json()
+
+    def pulls(self, repo_name: str, params: dict = None):
         """
-        Get unified pull requests.
-        
-        Args:
-            params: Optional query parameters (limit, after, include_raw)
-            
-        Returns:
-            Unified response with pull requests
-            
-        Raises:
-            RuntimeError: If the request fails
+        List pull requests for a specific repository
         """
-        return self._request("/git/pulls", params)
-    
-    def tags(self, params: Optional[Params] = None) -> Response:
+        url = self._build_url(f"git/repos/{quote(repo_name)}/pulls")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            endpoint = f"git/repos/{quote(repo_name)}/pulls"
+            raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
+
+        return response.json()
+
+    def tags(self, repo_name: str, params: dict = None):
         """
-        Get unified git tags.
-        
-        Args:
-            params: Optional query parameters (limit, after, include_raw)
-            
-        Returns:
-            Unified response with tags
-            
-        Raises:
-            RuntimeError: If the request fails
+        List tags for a specific repository
         """
-        return self._request("/git/tags", params)
-    
-    def releases(self, params: Optional[Params] = None) -> Response:
+        url = self._build_url(f"git/repos/{quote(repo_name)}/tags")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            endpoint = f"git/repos/{quote(repo_name)}/tags"
+            raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
+
+        return response.json()
+
+    def releases(self, repo_name: str, params: dict = None):
         """
-        Get unified releases.
-        
-        Args:
-            params: Optional query parameters (limit, after, include_raw)
-            
-        Returns:
-            Unified response with releases
-            
-        Raises:
-            RuntimeError: If the request fails
+        List releases for a specific repository
         """
-        return self._request("/git/releases", params)
+        url = self._build_url(f"git/repos/{quote(repo_name)}/releases")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            endpoint = f"git/repos/{quote(repo_name)}/releases"
+            raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
+
+        return response.json()

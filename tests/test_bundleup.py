@@ -1,89 +1,113 @@
-"""Tests for the main BundleUp client."""
+"""
+Tests for the main BundleUp class.
+"""
 
 import pytest
-from bundleup import BundleUp, ValidationError
-from bundleup.connection import Connections
-from bundleup.integration import Integrations
-from bundleup.webhooks import Webhooks
+from bundleup import BundleUp
 from bundleup.proxy import Proxy
 from bundleup.unify import Unify
+from bundleup.resources.connection import Connection
+from bundleup.resources.integration import Integration
+from bundleup.resources.webhook import Webhook
 
 
-def test_bundleup_init_with_valid_api_key():
-    """Test BundleUp initialization with valid API key."""
-    client = BundleUp("test-api-key")
-    assert client._api_key == "test-api-key"
+class TestBundleUpInitialization:
+    """Test BundleUp class initialization."""
+
+    def test_init_with_api_key(self, api_key):
+        """Test initialization with valid API key."""
+        client = BundleUp(api_key)
+
+        assert client._api_key == api_key
+        assert isinstance(client.connection, Connection)
+        assert isinstance(client.integration, Integration)
+        assert isinstance(client.webhook, Webhook)
+
+    def test_init_without_api_key(self):
+        """Test initialization without API key raises exception."""
+        with pytest.raises(Exception) as exc_info:
+            BundleUp(None)
+
+        assert "API key is required" in str(exc_info.value)
+
+    def test_init_with_empty_api_key(self):
+        """Test initialization with empty API key."""
+        # Note: Empty string is not None, so it should work
+        client = BundleUp("")
+        assert client._api_key == ""
 
 
-def test_bundleup_init_with_empty_api_key():
-    """Test BundleUp initialization with empty API key raises ValidationError."""
-    with pytest.raises(ValidationError, match="api_key cannot be empty"):
-        BundleUp("")
+class TestBundleUpProxy:
+    """Test BundleUp proxy method."""
+
+    def test_proxy_with_connection_id(self, api_key, connection_id):
+        """Test creating a proxy with valid connection ID."""
+        client = BundleUp(api_key)
+        proxy = client.proxy(connection_id)
+
+        assert isinstance(proxy, Proxy)
+        assert proxy._api_key == api_key
+        assert proxy._connection_id == connection_id
+
+    def test_proxy_without_connection_id(self, api_key):
+        """Test creating a proxy without connection ID raises exception."""
+        client = BundleUp(api_key)
+
+        with pytest.raises(Exception) as exc_info:
+            client.proxy(None)
+
+        assert "Connection ID is required" in str(exc_info.value)
 
 
-def test_bundleup_init_with_none_api_key():
-    """Test BundleUp initialization with None API key raises ValidationError."""
-    with pytest.raises(ValidationError, match="api_key must be a string"):
-        BundleUp(None)
+class TestBundleUpUnify:
+    """Test BundleUp unify method."""
+
+    def test_unify_with_connection_id(self, api_key, connection_id):
+        """Test creating a unify client with valid connection ID."""
+        client = BundleUp(api_key)
+        unify = client.unify(connection_id)
+
+        assert isinstance(unify, Unify)
+        assert unify.chat._api_key == api_key
+        assert unify.chat._connection_id == connection_id
+        assert unify.git._api_key == api_key
+        assert unify.git._connection_id == connection_id
+        assert unify.pm._api_key == api_key
+        assert unify.pm._connection_id == connection_id
+
+    def test_unify_without_connection_id(self, api_key):
+        """Test creating a unify client without connection ID raises exception."""
+        client = BundleUp(api_key)
+
+        with pytest.raises(Exception) as exc_info:
+            client.unify(None)
+
+        assert "Connection ID is required" in str(exc_info.value)
 
 
-def test_bundleup_connections_property():
-    """Test connections property returns Connections instance."""
-    client = BundleUp("test-api-key")
-    assert isinstance(client.connections, Connections)
+class TestBundleUpResources:
+    """Test BundleUp resource access."""
 
+    def test_connection_resource(self, api_key):
+        """Test connection resource is properly initialized."""
+        client = BundleUp(api_key)
 
-def test_bundleup_integrations_property():
-    """Test integrations property returns Integrations instance."""
-    client = BundleUp("test-api-key")
-    assert isinstance(client.integrations, Integrations)
+        assert hasattr(client, 'connection')
+        assert isinstance(client.connection, Connection)
+        assert client.connection._api_key == api_key
 
+    def test_integration_resource(self, api_key):
+        """Test integration resource is properly initialized."""
+        client = BundleUp(api_key)
 
-def test_bundleup_webhooks_property():
-    """Test webhooks property returns Webhooks instance."""
-    client = BundleUp("test-api-key")
-    assert isinstance(client.webhooks, Webhooks)
+        assert hasattr(client, 'integration')
+        assert isinstance(client.integration, Integration)
+        assert client.integration._api_key == api_key
 
+    def test_webhook_resource(self, api_key):
+        """Test webhook resource is properly initialized."""
+        client = BundleUp(api_key)
 
-def test_bundleup_proxy_method():
-    """Test proxy method returns Proxy instance."""
-    client = BundleUp("test-api-key")
-    proxy = client.proxy("connection-id")
-    assert isinstance(proxy, Proxy)
-    assert proxy._connection_id == "connection-id"
-
-
-def test_bundleup_proxy_method_with_empty_connection_id():
-    """Test proxy method with empty connection_id raises ValidationError."""
-    client = BundleUp("test-api-key")
-    with pytest.raises(ValidationError, match="connection_id cannot be empty"):
-        client.proxy("")
-
-
-def test_bundleup_unify_method():
-    """Test unify method returns Unify instance."""
-    client = BundleUp("test-api-key")
-    unify = client.unify("connection-id")
-    assert isinstance(unify, Unify)
-    assert unify._connection_id == "connection-id"
-
-
-def test_bundleup_unify_method_with_empty_connection_id():
-    """Test unify method with empty connection_id raises ValidationError."""
-    client = BundleUp("test-api-key")
-    with pytest.raises(ValidationError, match="connection_id cannot be empty"):
-        client.unify("")
-
-
-def test_bundleup_context_manager():
-    """Test BundleUp can be used as context manager."""
-    with BundleUp("test-api-key") as client:
-        assert client._api_key == "test-api-key"
-        assert client._session is not None
-
-
-def test_bundleup_repr():
-    """Test BundleUp __repr__ method."""
-    client = BundleUp("test-api-key")
-    assert "BundleUp" in repr(client)
-    assert "0.1.0" in repr(client)
+        assert hasattr(client, 'webhook')
+        assert isinstance(client.webhook, Webhook)
+        assert client.webhook._api_key == api_key
