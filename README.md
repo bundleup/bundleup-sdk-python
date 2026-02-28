@@ -523,7 +523,7 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    signature = request.headers.get('Bundleup-Signature')
+    signature = request.headers.get('BundleUp-Signature')
     payload = request.get_data()
 
     if not verify_signature(payload, signature):
