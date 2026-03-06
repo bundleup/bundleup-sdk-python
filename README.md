@@ -25,7 +25,6 @@ Official Python SDK for the [BundleUp](https://bundleup.io) API. Connect to 100+
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
-- [Support](#support)
 
 ## Installation
 
@@ -1177,39 +1176,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
-## Support
-
-Need help? We're here for you!
-
-### Documentation
-
-- **Official Docs**: [https://docs.bundleup.io](https://docs.bundleup.io)
-- **API Reference**: [https://docs.bundleup.io/api](https://docs.bundleup.io/api)
-- **SDK Guides**: [https://docs.bundleup.io/sdk/python](https://docs.bundleup.io/sdk/python)
-
-### Community
-
-- **Discord**: [https://discord.gg/bundleup](https://discord.gg/bundleup)
-- **GitHub Discussions**: [https://github.com/bundleup/bundleup-sdk-python/discussions](https://github.com/bundleup/bundleup-sdk-python/discussions)
-- **Stack Overflow**: Tag your questions with `bundleup`
-
-### Direct Support
-
-- **Email**: [support@bundleup.io](mailto:support@bundleup.io)
-- **GitHub Issues**: [https://github.com/bundleup/bundleup-sdk-python/issues](https://github.com/bundleup/bundleup-sdk-python/issues)
-- **Twitter**: [@bundleup_io](https://twitter.com/bundleup_io)
-
-### Enterprise Support
-
-For enterprise customers, we offer:
-
-- Priority support with SLA
-- Dedicated support channel
-- Architecture consultation
-- Custom integration assistance
-
-Contact [enterprise@bundleup.io](mailto:enterprise@bundleup.io) for more information.
 
 ## Code of Conduct
 
