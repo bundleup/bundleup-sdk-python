@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional, cast
 from .base import Base
 from .types import TicketsResponse
 
+
 class Ticketing(Base):
     def tickets(self, params: Optional[Dict[str, Any]] = None) -> TicketsResponse:
         """
