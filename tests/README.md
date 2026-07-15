@@ -50,7 +50,7 @@ The test suite includes **87 tests** covering all major components of the SDK:
 
 7. **test_unify.py** (15 tests) - Unify API client
    - Unify class initialization
-   - Chat, Git, and PM subclients
+   - Chat, Git, and Ticketing subclients
    - Method signatures and parameters
    - Base class configuration
 

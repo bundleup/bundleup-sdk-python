@@ -1,6 +1,6 @@
 from .chat import Chat
 from .git import Git
-from .pm import PM
+from .ticketing import Ticketing
 
 
 class Unify:
@@ -8,4 +8,4 @@ class Unify:
         # Initialize
         self.chat = Chat(api_key, connection_id)
         self.git = Git(api_key, connection_id)
-        self.pm = PM(api_key, connection_id)
+        self.ticketing = Ticketing(api_key, connection_id)
