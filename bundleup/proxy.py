@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 import requests
@@ -10,28 +11,48 @@ class Proxy:
         self._api_key = api_key
         self._connection_id = connection_id
 
-    def get(self, path: str, params: dict = None, headers: dict = None):
+    def get(
+        self,
+        path: str,
+        params: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> requests.Response:
         url = self._build_url(path)
         return self._connection.get(url, params=params, headers=headers)
 
-    def post(self, path: str, body: dict = None, headers: dict = None):
+    def post(
+        self,
+        path: str,
+        body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> requests.Response:
         url = self._build_url(path)
         return self._connection.post(url, json=body, headers=headers)
 
-    def put(self, path: str, body: dict = None, headers: dict = None):
+    def put(
+        self,
+        path: str,
+        body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> requests.Response:
         url = self._build_url(path)
         return self._connection.put(url, json=body, headers=headers)
 
-    def patch(self, path: str, body: dict = None, headers: dict = None):
+    def patch(
+        self,
+        path: str,
+        body: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> requests.Response:
         url = self._build_url(path)
         return self._connection.patch(url, json=body, headers=headers)
 
-    def delete(self, path: str, headers: dict = None):
+    def delete(self, path: str, headers: Optional[Dict[str, Any]] = None) -> requests.Response:
         url = self._build_url(path)
         return self._connection.delete(url, headers=headers)
 
     @property
-    def _connection(self):
+    def _connection(self) -> requests.Session:
         request = requests.Session()
         request.headers.update({
             "Authorization": f"Bearer {self._api_key}",
@@ -40,5 +61,5 @@ class Proxy:
         })
         return request
 
-    def _build_url(self, path: str):
+    def _build_url(self, path: str) -> str:
         return urljoin(self.base_url, path)

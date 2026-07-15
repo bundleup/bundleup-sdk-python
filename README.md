@@ -82,7 +82,7 @@ Runnable examples are available in the [`examples/`](./examples) directory:
 
 - [`examples/basic_usage.py`](./examples/basic_usage.py) - Client setup, connections, integrations, and webhooks
 - [`examples/proxy_api.py`](./examples/proxy_api.py) - Proxy API GET request with a connection
-- [`examples/unify_api.py`](./examples/unify_api.py) - Unify Chat, Git, and Ticketing endpoint usage
+- [`examples/unify_api.py`](./examples/unify_api.py) - Unify Chat, Git, Ticketing, CRM, and Drive endpoint usage
 - [`examples/README.md`](./examples/README.md) - Setup and execution instructions
 
 ## Quick Start
@@ -728,6 +728,43 @@ unify = client.unify('conn_123abc')
 
 The Chat API provides a unified interface for chat platforms like Slack, Discord, and Microsoft Teams.
 
+##### List Users
+
+Retrieve a list of users from the connected chat platform.
+
+```python
+result = unify.chat.users({
+    'limit': 100,
+    'after': None,
+    'include_raw': False
+})
+
+print(f"Users: {result['data']}")
+print(f"Next cursor: {result['metadata']['next']}")
+```
+
+**Parameters:**
+
+- `limit` (int, optional): Maximum number of users to return (default: 100, max: 1000)
+- `after` (str, optional): Pagination cursor from previous response
+- `include_raw` (bool, optional): Include raw API response from the integration (default: False)
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': 'U1234567890',
+            'name': 'Jane Doe'
+        }
+    ],
+    'metadata': {
+        'next': 'cursor_abc123'
+    }
+}
+```
+
 ##### List Channels
 
 Retrieve a list of channels from the connected chat platform.
@@ -791,6 +828,31 @@ while True:
         break
 
 print(f"Fetched {len(all_channels)} total channels")
+```
+
+##### Send Message
+
+Send a message to a channel on the connected chat platform.
+
+```python
+result = unify.chat.message('C1234567890', 'Hello from BundleUp! :wave:')
+
+print(f"Message sent: {result['data']}")
+```
+
+**Parameters:**
+
+- `channel_id` (str, required): The ID of the channel to send the message to
+- `text` (str, required): Markdown-formatted message text
+
+**Response:**
+
+```python
+{
+    'data': {
+        # Raw response data from the chat provider
+    }
+}
 ```
 
 #### Git API
@@ -933,6 +995,31 @@ print(f"Releases: {result['data']}")
 }
 ```
 
+##### List Branches
+
+```python
+result = unify.git.branches('organization/repo-name', {'limit': 50})
+
+print(f"Branches: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'name': 'main',
+            'commit_sha': 'abc123def456',
+            'protected': True
+        }
+    ],
+    'metadata': {
+        'next': None
+    }
+}
+```
+
 #### Ticketing API
 
 The Ticketing API provides a unified interface for ticketing and project management platforms like Jira, Linear, and Asana.
@@ -979,6 +1066,106 @@ sorted_by_date = sorted(
     key=lambda x: x['created_at'],
     reverse=True
 )
+```
+
+#### CRM API
+
+The CRM API provides a unified interface for CRM platforms like Attio, HubSpot, PipeDrive, Salesforce and Zoho.
+
+##### List Companies
+
+```python
+result = unify.crm.companies({
+    'limit': 100,
+    'after': None,
+    'include_raw': False
+})
+
+print(f"Companies: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': '12345',
+            'name': 'Acme Inc.',
+            'website': 'https://acme.example.com'
+        }
+    ],
+    'metadata': {
+        'next': None
+    }
+}
+```
+
+##### List Contacts
+
+```python
+result = unify.crm.contacts({
+    'limit': 100,
+    'after': None,
+    'include_raw': False
+})
+
+print(f"Contacts: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': '67890',
+            'name': 'Jane Doe',
+            'email': 'jane@acme.example.com'
+        }
+    ],
+    'metadata': {
+        'next': None
+    }
+}
+```
+
+#### Drive API
+
+The Drive API provides a unified interface for file storage platforms like Google Drive, OneDrive, Box, Dropbox and Microsoft SharePoint.
+
+##### List Files
+
+```python
+result = unify.drive.files({
+    'limit': 100,
+    'after': None,
+    'include_raw': False
+})
+
+print(f"Files: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': 'file_123',
+            'name': 'quarterly-report.pdf',
+            'mime_type': 'application/pdf',
+            'size': 204800,
+            'created_at': '2024-01-15T10:30:00Z',
+            'updated_at': '2024-01-20T14:22:00Z',
+            'url': 'https://drive.example.com/file_123',
+            'is_folder': False
+        }
+    ],
+    'metadata': {
+        'next': None
+    }
+}
 ```
 
 ## Error Handling
@@ -1045,7 +1232,10 @@ bundleup/
     ├── base.py              # Base Unify class
     ├── chat.py              # Chat Unify API
     ├── git.py               # Git Unify API
-    └── ticketing.py         # Ticketing Unify API
+    ├── ticketing.py         # Ticketing Unify API
+    ├── crm.py               # CRM Unify API
+    ├── drive.py             # Drive Unify API
+    └── types.py             # TypedDicts for Unify response shapes
 tests/                       # Test files
 ```
 

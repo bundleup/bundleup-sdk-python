@@ -6,6 +6,8 @@ from bundleup.unify import Unify
 from bundleup.unify.chat import Chat
 from bundleup.unify.git import Git
 from bundleup.unify.ticketing import Ticketing
+from bundleup.unify.crm import CRM
+from bundleup.unify.drive import Drive
 
 
 class TestUnifyInitialization:
@@ -18,6 +20,8 @@ class TestUnifyInitialization:
         assert isinstance(unify.chat, Chat)
         assert isinstance(unify.git, Git)
         assert isinstance(unify.ticketing, Ticketing)
+        assert isinstance(unify.crm, CRM)
+        assert isinstance(unify.drive, Drive)
 
     def test_chat_has_correct_params(self, api_key, connection_id):
         """Test that chat client has correct parameters."""
@@ -40,6 +44,20 @@ class TestUnifyInitialization:
         assert unify.ticketing._api_key == api_key
         assert unify.ticketing._connection_id == connection_id
 
+    def test_crm_has_correct_params(self, api_key, connection_id):
+        """Test that crm client has correct parameters."""
+        unify = Unify(api_key, connection_id)
+
+        assert unify.crm._api_key == api_key
+        assert unify.crm._connection_id == connection_id
+
+    def test_drive_has_correct_params(self, api_key, connection_id):
+        """Test that drive client has correct parameters."""
+        unify = Unify(api_key, connection_id)
+
+        assert unify.drive._api_key == api_key
+        assert unify.drive._connection_id == connection_id
+
 
 class TestChatInitialization:
     """Test Chat class initialization."""
@@ -52,12 +70,26 @@ class TestChatInitialization:
         assert chat._connection_id == connection_id
         assert chat.base_url == "https://unify.bundleup.io"
 
+    def test_has_users_method(self, api_key, connection_id):
+        """Test that Chat has users method."""
+        chat = Chat(api_key, connection_id)
+
+        assert hasattr(chat, 'users')
+        assert callable(chat.users)
+
     def test_has_channels_method(self, api_key, connection_id):
         """Test that Chat has channels method."""
         chat = Chat(api_key, connection_id)
 
         assert hasattr(chat, 'channels')
         assert callable(chat.channels)
+
+    def test_has_message_method(self, api_key, connection_id):
+        """Test that Chat has message method."""
+        chat = Chat(api_key, connection_id)
+
+        assert hasattr(chat, 'message')
+        assert callable(chat.message)
 
 
 class TestGitInitialization:
@@ -99,6 +131,13 @@ class TestGitInitialization:
         assert hasattr(git, 'releases')
         assert callable(git.releases)
 
+    def test_has_branches_method(self, api_key, connection_id):
+        """Test that Git has branches method."""
+        git = Git(api_key, connection_id)
+
+        assert hasattr(git, 'branches')
+        assert callable(git.branches)
+
 
 class TestTicketingInitialization:
     """Test Ticketing class initialization."""
@@ -119,6 +158,51 @@ class TestTicketingInitialization:
         assert callable(ticketing.tickets)
 
 
+class TestCRMInitialization:
+    """Test CRM class initialization."""
+
+    def test_init_with_valid_params(self, api_key, connection_id):
+        """Test initialization with valid API key and connection ID."""
+        crm = CRM(api_key, connection_id)
+
+        assert crm._api_key == api_key
+        assert crm._connection_id == connection_id
+        assert crm.base_url == "https://unify.bundleup.io"
+
+    def test_has_companies_method(self, api_key, connection_id):
+        """Test that CRM has companies method."""
+        crm = CRM(api_key, connection_id)
+
+        assert hasattr(crm, 'companies')
+        assert callable(crm.companies)
+
+    def test_has_contacts_method(self, api_key, connection_id):
+        """Test that CRM has contacts method."""
+        crm = CRM(api_key, connection_id)
+
+        assert hasattr(crm, 'contacts')
+        assert callable(crm.contacts)
+
+
+class TestDriveInitialization:
+    """Test Drive class initialization."""
+
+    def test_init_with_valid_params(self, api_key, connection_id):
+        """Test initialization with valid API key and connection ID."""
+        drive = Drive(api_key, connection_id)
+
+        assert drive._api_key == api_key
+        assert drive._connection_id == connection_id
+        assert drive.base_url == "https://unify.bundleup.io"
+
+    def test_has_files_method(self, api_key, connection_id):
+        """Test that Drive has files method."""
+        drive = Drive(api_key, connection_id)
+
+        assert hasattr(drive, 'files')
+        assert callable(drive.files)
+
+
 class TestUnifyBaseClass:
     """Test Unify base class."""
 
@@ -127,10 +211,14 @@ class TestUnifyBaseClass:
         chat = Chat(api_key, connection_id)
         git = Git(api_key, connection_id)
         ticketing = Ticketing(api_key, connection_id)
+        crm = CRM(api_key, connection_id)
+        drive = Drive(api_key, connection_id)
 
         assert chat.base_url == "https://unify.bundleup.io"
         assert git.base_url == "https://unify.bundleup.io"
         assert ticketing.base_url == "https://unify.bundleup.io"
+        assert crm.base_url == "https://unify.bundleup.io"
+        assert drive.base_url == "https://unify.bundleup.io"
 
 
 class TestUnifyMethodSignatures:
@@ -167,6 +255,17 @@ class TestUnifyMethodSignatures:
 
         try:
             git.releases("my-repo")
+        except TypeError as e:
+            assert "repo_name" not in str(e)
+        except Exception:
+            pass
+
+    def test_git_branches_accepts_repo_name(self, api_key, connection_id):
+        """Test that git.branches accepts repo_name parameter."""
+        git = Git(api_key, connection_id)
+
+        try:
+            git.branches("my-repo")
         except TypeError as e:
             assert "repo_name" not in str(e)
         except Exception:

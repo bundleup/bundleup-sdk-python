@@ -12,7 +12,7 @@ class Base:
         self._connection_id = connection_id
 
     @property
-    def _connection(self):
+    def _connection(self) -> requests.Session:
         request = requests.Session()
         request.headers.update({
             "Authorization": f"Bearer {self._api_key}",
@@ -21,5 +21,5 @@ class Base:
         })
         return request
 
-    def _build_url(self, path: str):
+    def _build_url(self, path: str) -> str:
         return urljoin(f"{self.base_url}/{self.version}/", path)

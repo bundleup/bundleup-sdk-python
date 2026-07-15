@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
 import requests
@@ -13,28 +14,28 @@ class Base(ABC):
 
     @property
     @abstractmethod
-    def _resource_name(self):
+    def _resource_name(self) -> str:
         pass
 
-    def _list(self, params: dict = None):
+    def _list(self, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         url = self._build_url("")
         response = self._connection.get(url, params=params)
 
         if not response.ok:
             raise Exception(f"Failed to fetch {self._resource_name}: {response.status_code}")
 
-        return response.json()
+        return dict(response.json())
 
-    def _create(self, body: dict):
+    def _create(self, body: Dict[str, Any]) -> Dict[str, Any]:
         url = self._build_url("")
         response = self._connection.post(url, json=body)
 
         if not response.ok:
             raise Exception(f"Failed to create {self._resource_name}: {response.status_code}")
 
-        return response.json()
+        return dict(response.json())
 
-    def _retrieve(self, id: str):
+    def _retrieve(self, id: str) -> Dict[str, Any]:
         if id is None:
             raise ValueError("ID is required for retrieval.")
 
@@ -44,9 +45,9 @@ class Base(ABC):
         if not response.ok:
             raise Exception(f"Failed to retrieve {self._resource_name}: {response.status_code}")
 
-        return response.json()
+        return dict(response.json())
 
-    def _update(self, id: str, body: dict):
+    def _update(self, id: str, body: Dict[str, Any]) -> Dict[str, Any]:
         if id is None:
             raise ValueError("ID is required for update.")
 
@@ -56,9 +57,9 @@ class Base(ABC):
         if not response.ok:
             raise Exception(f"Failed to update {self._resource_name}: {response.status_code}")
 
-        return response.json()
+        return dict(response.json())
 
-    def _delete(self, id: str):
+    def _delete(self, id: str) -> None:
         if id is None:
             raise ValueError("ID is required for deletion.")
 
@@ -71,7 +72,7 @@ class Base(ABC):
         return None
 
     @property
-    def _connection(self):
+    def _connection(self) -> requests.Session:
         request = requests.Session()
         request.headers.update({
             "Authorization": f"Bearer {self._api_key}",
@@ -79,5 +80,5 @@ class Base(ABC):
         })
         return request
 
-    def _build_url(self, path: str):
+    def _build_url(self, path: str) -> str:
         return urljoin(f"{self.base_url}/{self.version}/{self._resource_name}/", path)

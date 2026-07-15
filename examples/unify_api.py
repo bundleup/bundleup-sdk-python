@@ -17,6 +17,12 @@ unify = client.unify(connection_id)
 print("Unify API example")
 
 try:
+    users = unify.chat.users({"limit": 10})
+    print(f"Chat users: {len(users.get('data', []))}")
+except Exception as error:
+    print(f"Failed to fetch chat users: {error}")
+
+try:
     channels = unify.chat.channels({"limit": 10})
     print(f"Chat channels: {len(channels.get('data', []))}")
 except Exception as error:
