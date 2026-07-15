@@ -82,7 +82,7 @@ Runnable examples are available in the [`examples/`](./examples) directory:
 
 - [`examples/basic_usage.py`](./examples/basic_usage.py) - Client setup, connections, integrations, and webhooks
 - [`examples/proxy_api.py`](./examples/proxy_api.py) - Proxy API GET request with a connection
-- [`examples/unify_api.py`](./examples/unify_api.py) - Unify Chat, Git, and PM endpoint usage
+- [`examples/unify_api.py`](./examples/unify_api.py) - Unify Chat, Git, and Ticketing endpoint usage
 - [`examples/README.md`](./examples/README.md) - Setup and execution instructions
 
 ## Quick Start
@@ -933,20 +933,20 @@ print(f"Releases: {result['data']}")
 }
 ```
 
-#### Project Management API
+#### Ticketing API
 
-The PM API provides a unified interface for project management platforms like Jira, Linear, and Asana.
+The Ticketing API provides a unified interface for ticketing and project management platforms like Jira, Linear, and Asana.
 
-##### List Issues
+##### List Tickets
 
 ```python
-result = unify.pm.issues({
+result = unify.ticketing.tickets({
     'limit': 100,
     'after': None,
     'include_raw': False
 })
 
-print(f"Issues: {result['data']}")
+print(f"Tickets: {result['data']}")
 ```
 
 **Response:**
@@ -973,7 +973,7 @@ print(f"Issues: {result['data']}")
 **Filtering and sorting:**
 
 ```python
-open_issues = [issue for issue in result['data'] if issue['status'] == 'open']
+open_tickets = [ticket for ticket in result['data'] if ticket['status'] == 'open']
 sorted_by_date = sorted(
     result['data'],
     key=lambda x: x['created_at'],
@@ -1045,7 +1045,7 @@ bundleup/
     ├── base.py              # Base Unify class
     ├── chat.py              # Chat Unify API
     ├── git.py               # Git Unify API
-    └── pm.py                # PM Unify API
+    └── ticketing.py         # Ticketing Unify API
 tests/                       # Test files
 ```
 

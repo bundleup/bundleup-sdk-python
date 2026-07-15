@@ -29,7 +29,7 @@ except Exception as error:
     print(f"Failed to fetch git repos: {error}")
 
 try:
-    issues = unify.pm.issues({"limit": 10})
-    print(f"PM issues: {len(issues.get('data', []))}")
+    tickets = unify.ticketing.tickets({"limit": 10})
+    print(f"Ticketing tickets: {len(tickets.get('data', []))}")
 except Exception as error:
-    print(f"Failed to fetch PM issues: {error}")
+    print(f"Failed to fetch tickets: {error}")

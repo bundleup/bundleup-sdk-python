@@ -26,4 +26,4 @@ python examples/unify_api.py
 
 - `basic_usage.py` — initialize the SDK and list connections, integrations, and webhooks
 - `proxy_api.py` — send a GET request through the Proxy API
-- `unify_api.py` — call Unify Chat, Git, and PM endpoints
+- `unify_api.py` — call Unify Chat, Git, and Ticketing endpoints

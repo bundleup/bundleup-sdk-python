@@ -5,7 +5,7 @@ Tests for the Unify classes.
 from bundleup.unify import Unify
 from bundleup.unify.chat import Chat
 from bundleup.unify.git import Git
-from bundleup.unify.pm import PM
+from bundleup.unify.ticketing import Ticketing
 
 
 class TestUnifyInitialization:
@@ -17,7 +17,7 @@ class TestUnifyInitialization:
 
         assert isinstance(unify.chat, Chat)
         assert isinstance(unify.git, Git)
-        assert isinstance(unify.pm, PM)
+        assert isinstance(unify.ticketing, Ticketing)
 
     def test_chat_has_correct_params(self, api_key, connection_id):
         """Test that chat client has correct parameters."""
@@ -33,12 +33,12 @@ class TestUnifyInitialization:
         assert unify.git._api_key == api_key
         assert unify.git._connection_id == connection_id
 
-    def test_pm_has_correct_params(self, api_key, connection_id):
-        """Test that pm client has correct parameters."""
+    def test_ticketing_has_correct_params(self, api_key, connection_id):
+        """Test that ticketing client has correct parameters."""
         unify = Unify(api_key, connection_id)
 
-        assert unify.pm._api_key == api_key
-        assert unify.pm._connection_id == connection_id
+        assert unify.ticketing._api_key == api_key
+        assert unify.ticketing._connection_id == connection_id
 
 
 class TestChatInitialization:
@@ -100,23 +100,23 @@ class TestGitInitialization:
         assert callable(git.releases)
 
 
-class TestPMInitialization:
-    """Test PM class initialization."""
+class TestTicketingInitialization:
+    """Test Ticketing class initialization."""
 
     def test_init_with_valid_params(self, api_key, connection_id):
         """Test initialization with valid API key and connection ID."""
-        pm = PM(api_key, connection_id)
+        ticketing = Ticketing(api_key, connection_id)
 
-        assert pm._api_key == api_key
-        assert pm._connection_id == connection_id
-        assert pm.base_url == "https://unify.bundleup.io"
+        assert ticketing._api_key == api_key
+        assert ticketing._connection_id == connection_id
+        assert ticketing.base_url == "https://unify.bundleup.io"
 
-    def test_has_issues_method(self, api_key, connection_id):
-        """Test that PM has issues method."""
-        pm = PM(api_key, connection_id)
+    def test_has_tickets_method(self, api_key, connection_id):
+        """Test that Ticketing has tickets method."""
+        ticketing = Ticketing(api_key, connection_id)
 
-        assert hasattr(pm, 'issues')
-        assert callable(pm.issues)
+        assert hasattr(ticketing, 'tickets')
+        assert callable(ticketing.tickets)
 
 
 class TestUnifyBaseClass:
@@ -126,11 +126,11 @@ class TestUnifyBaseClass:
         """Test that base URL is correctly set."""
         chat = Chat(api_key, connection_id)
         git = Git(api_key, connection_id)
-        pm = PM(api_key, connection_id)
+        ticketing = Ticketing(api_key, connection_id)
 
         assert chat.base_url == "https://unify.bundleup.io"
         assert git.base_url == "https://unify.bundleup.io"
-        assert pm.base_url == "https://unify.bundleup.io"
+        assert ticketing.base_url == "https://unify.bundleup.io"
 
 
 class TestUnifyMethodSignatures:
