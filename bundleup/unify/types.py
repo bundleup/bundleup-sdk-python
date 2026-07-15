@@ -160,7 +160,7 @@ class BranchesResponse(TypedDict):
 
 # Project Management
 
-class PmIssue(TypedDict):
+class TicketingTicket(TypedDict):
     id: str
     title: str
     status: str
@@ -170,6 +170,6 @@ class PmIssue(TypedDict):
     updated_at: str
 
 
-class IssuesResponse(TypedDict):
-    data: List[PmIssue]
+class TicketsResponse(TypedDict):
+    data: List[TicketingTicket]
     metadata: Metadata
