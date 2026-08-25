@@ -37,11 +37,11 @@ class Chat(Base):
         if not channel_id:
             raise ValueError("channel_id is required to send a message.")
 
-        url = self._build_url(f"chat/channels/{quote(channel_id)}/message")
+        url = self._build_url(f"chat/channels/{quote(channel_id, safe='')}/message")
         response = self._connection.post(url, json={"text": text})
 
         if not response.ok:
-            endpoint = f"chat/channels/{quote(channel_id)}/message"
+            endpoint = f"chat/channels/{quote(channel_id, safe='')}/message"
             raise Exception(f"Failed to post {endpoint}: {response.status_code}")
 
         return cast(MessageResponse, response.json())

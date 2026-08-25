@@ -133,6 +133,15 @@ class GitBranch(TypedDict):
     protected: bool
 
 
+class GitCommit(TypedDict):
+    sha: str
+    message: Optional[str]
+    url: str
+    author: Optional[str]
+    author_email: Optional[str]
+    committed_at: Optional[str]
+
+
 class ReposResponse(TypedDict):
     data: List[GitRepo]
     metadata: Metadata
@@ -155,6 +164,11 @@ class ReleasesResponse(TypedDict):
 
 class BranchesResponse(TypedDict):
     data: List[GitBranch]
+    metadata: Metadata
+
+
+class CommitsResponse(TypedDict):
+    data: List[GitCommit]
     metadata: Metadata
 
 

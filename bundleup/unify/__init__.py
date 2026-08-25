@@ -3,6 +3,7 @@ from .git import Git
 from .ticketing import Ticketing
 from .crm import CRM
 from .drive import Drive
+from .mcp import MCP
 
 
 class Unify:
@@ -13,3 +14,4 @@ class Unify:
         self.ticketing = Ticketing(api_key, connection_id)
         self.crm = CRM(api_key, connection_id)
         self.drive = Drive(api_key, connection_id)
+        self.mcp = MCP(api_key, connection_id)

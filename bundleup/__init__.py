@@ -1,3 +1,4 @@
+from .mcp import MCP, MCPClient
 from .proxy import Proxy
 from .unify import Unify
 
@@ -30,3 +31,12 @@ class BundleUp:
             raise Exception("Connection ID is required to create a Unify client.")
 
         return Unify(self._api_key, connection_id)
+
+    def mcp(self, connection_id: str) -> MCP:
+        if connection_id is None:
+            raise Exception("Connection ID is required to create an MCP client.")
+
+        return MCP(self._api_key, connection_id)
+
+
+__all__ = ["BundleUp", "MCP", "MCPClient", "Proxy", "Unify"]

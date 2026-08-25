@@ -2,7 +2,14 @@ from typing import Any, Dict, Optional, cast
 from urllib.parse import quote
 
 from .base import Base
-from .types import BranchesResponse, PullsResponse, ReleasesResponse, ReposResponse, TagsResponse
+from .types import (
+    BranchesResponse,
+    CommitsResponse,
+    PullsResponse,
+    ReleasesResponse,
+    ReposResponse,
+    TagsResponse,
+)
 
 
 class Git(Base):
@@ -22,11 +29,14 @@ class Git(Base):
         """
         List pull requests for a specific repository
         """
-        url = self._build_url(f"git/repos/{quote(repo_name)}/pulls")
+        if not repo_name:
+            raise ValueError("repo_name is required to fetch pulls.")
+
+        url = self._build_url(f"git/repos/{quote(repo_name, safe='')}/pulls")
         response = self._connection.get(url, params=params)
 
         if not response.ok:
-            endpoint = f"git/repos/{quote(repo_name)}/pulls"
+            endpoint = f"git/repos/{quote(repo_name, safe='')}/pulls"
             raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
 
         return cast(PullsResponse, response.json())
@@ -35,11 +45,14 @@ class Git(Base):
         """
         List tags for a specific repository
         """
-        url = self._build_url(f"git/repos/{quote(repo_name)}/tags")
+        if not repo_name:
+            raise ValueError("repo_name is required to fetch tags.")
+
+        url = self._build_url(f"git/repos/{quote(repo_name, safe='')}/tags")
         response = self._connection.get(url, params=params)
 
         if not response.ok:
-            endpoint = f"git/repos/{quote(repo_name)}/tags"
+            endpoint = f"git/repos/{quote(repo_name, safe='')}/tags"
             raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
 
         return cast(TagsResponse, response.json())
@@ -48,11 +61,14 @@ class Git(Base):
         """
         List releases for a specific repository
         """
-        url = self._build_url(f"git/repos/{quote(repo_name)}/releases")
+        if not repo_name:
+            raise ValueError("repo_name is required to fetch releases.")
+
+        url = self._build_url(f"git/repos/{quote(repo_name, safe='')}/releases")
         response = self._connection.get(url, params=params)
 
         if not response.ok:
-            endpoint = f"git/repos/{quote(repo_name)}/releases"
+            endpoint = f"git/repos/{quote(repo_name, safe='')}/releases"
             raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
 
         return cast(ReleasesResponse, response.json())
@@ -61,11 +77,30 @@ class Git(Base):
         """
         List branches for a specific repository
         """
-        url = self._build_url(f"git/repos/{quote(repo_name)}/branches")
+        if not repo_name:
+            raise ValueError("repo_name is required to fetch branches.")
+
+        url = self._build_url(f"git/repos/{quote(repo_name, safe='')}/branches")
         response = self._connection.get(url, params=params)
 
         if not response.ok:
-            endpoint = f"git/repos/{quote(repo_name)}/branches"
+            endpoint = f"git/repos/{quote(repo_name, safe='')}/branches"
             raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
 
         return cast(BranchesResponse, response.json())
+
+    def commits(self, repo_name: str, params: Optional[Dict[str, Any]] = None) -> CommitsResponse:
+        """
+        List commits for a specific repository
+        """
+        if not repo_name:
+            raise ValueError("repo_name is required to fetch commits.")
+
+        url = self._build_url(f"git/repos/{quote(repo_name, safe='')}/commits")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            endpoint = f"git/repos/{quote(repo_name, safe='')}/commits"
+            raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
+
+        return cast(CommitsResponse, response.json())
