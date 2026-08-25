@@ -8,6 +8,7 @@ from bundleup.unify.git import Git
 from bundleup.unify.ticketing import Ticketing
 from bundleup.unify.crm import CRM
 from bundleup.unify.drive import Drive
+from bundleup.unify.me import Me
 
 
 class TestUnifyInitialization:
@@ -22,6 +23,7 @@ class TestUnifyInitialization:
         assert isinstance(unify.ticketing, Ticketing)
         assert isinstance(unify.crm, CRM)
         assert isinstance(unify.drive, Drive)
+        assert isinstance(unify._me, Me)
 
     def test_chat_has_correct_params(self, api_key, connection_id):
         """Test that chat client has correct parameters."""
@@ -57,6 +59,21 @@ class TestUnifyInitialization:
 
         assert unify.drive._api_key == api_key
         assert unify.drive._connection_id == connection_id
+
+
+    def test_me_has_correct_params(self, api_key, connection_id):
+        """Test that the me client has correct parameters."""
+        unify = Unify(api_key, connection_id)
+
+        assert unify._me._api_key == api_key
+        assert unify._me._connection_id == connection_id
+
+    def test_me_is_a_method_not_a_namespace(self, api_key, connection_id):
+        """`me` is a root-level endpoint, so it is called rather than accessed."""
+        unify = Unify(api_key, connection_id)
+
+        assert callable(unify.me)
+        assert not isinstance(unify.me, Me)
 
 
 class TestChatInitialization:
@@ -201,6 +218,25 @@ class TestDriveInitialization:
 
         assert hasattr(drive, 'files')
         assert callable(drive.files)
+
+
+class TestMeInitialization:
+    """Test Me class initialization."""
+
+    def test_init_with_valid_params(self, api_key, connection_id):
+        """Test initialization with valid API key and connection ID."""
+        me = Me(api_key, connection_id)
+
+        assert me._api_key == api_key
+        assert me._connection_id == connection_id
+        assert me.base_url == "https://unify.bundleup.io"
+
+    def test_has_get_method(self, api_key, connection_id):
+        """Test that Me has a get method."""
+        me = Me(api_key, connection_id)
+
+        assert hasattr(me, 'get')
+        assert callable(me.get)
 
 
 class TestUnifyBaseClass:

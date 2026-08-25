@@ -16,6 +16,19 @@ class Metadata(TypedDict):
     next: Optional[str]
 
 
+# Identity
+
+class Account(TypedDict):
+    id: Optional[str]
+    name: Optional[str]
+    email: Optional[str]
+    avatar_url: Optional[str]
+
+
+class MeResponse(TypedDict):
+    data: Account
+
+
 # Chat
 
 class ChatUser(TypedDict):

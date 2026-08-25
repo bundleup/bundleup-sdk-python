@@ -12,7 +12,9 @@ from bundleup.unify.chat import Chat
 from bundleup.unify.crm import CRM
 from bundleup.unify.drive import Drive
 from bundleup.unify.git import Git
+from bundleup.unify.me import Me
 from bundleup.unify.ticketing import Ticketing
+from bundleup.unify import Unify
 
 BASE = "https://unify.bundleup.io/v1"
 
@@ -212,3 +214,49 @@ class TestGit:
         getattr(Git(api_key, connection_id), method)("acme/api", {"limit": 5})
 
         assert "limit=5" in mock_responses.calls[0].request.url
+
+
+ACCOUNT = {"data": {"id": "u_1", "name": "Ada", "email": "ada@acme.io", "avatar_url": None}}
+
+
+class TestMe:
+    """me"""
+
+    def test_targets_the_root_endpoint_not_a_vertical(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/me", json=ACCOUNT)
+
+        Me(api_key, connection_id).get()
+
+        assert mock_responses.calls[0].request.url.rstrip("/") == f"{BASE}/me"
+
+    def test_sends_the_api_key_and_connection_id(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/me", json=ACCOUNT)
+
+        Me(api_key, connection_id).get()
+
+        headers = mock_responses.calls[0].request.headers
+        assert headers["Authorization"] == f"Bearer {api_key}"
+        assert headers["BU-Connection-Id"] == connection_id
+
+    def test_passes_include_raw_through(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/me", json=ACCOUNT)
+
+        Me(api_key, connection_id).get({"include_raw": "true"})
+
+        assert "include_raw=true" in mock_responses.calls[0].request.url
+
+    def test_returns_the_parsed_account(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/me", json=ACCOUNT)
+
+        assert Me(api_key, connection_id).get() == ACCOUNT
+
+    def test_raises_on_failure(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/me", json={}, status=502)
+
+        with pytest.raises(Exception, match="Failed to fetch me: 502"):
+            Me(api_key, connection_id).get()
+
+    def test_is_reachable_from_the_unify_client(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/me", json=ACCOUNT)
+
+        assert Unify(api_key, connection_id).me() == ACCOUNT
