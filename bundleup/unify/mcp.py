@@ -31,17 +31,17 @@ class MCP:
             "token": f"{self._api_key}{CREDENTIAL_SEPARATOR}{self._connection_id}",
         }
 
-    def tools(self) -> List[Dict[str, Any]]:
+    def list_tools(self) -> List[Dict[str, Any]]:
         """
         List the available unified tools.
         """
-        return self._client.tools()
+        return self._client.list_tools()
 
-    def tool(self, name: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def call_tool(self, name: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Call a unified tool with optional arguments.
         """
         if not name:
             raise ValueError("Tool name is required to call a tool.")
 
-        return self._client.tool(name, args)
+        return self._client.call_tool(name, args)

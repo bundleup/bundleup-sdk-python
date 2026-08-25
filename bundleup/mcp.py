@@ -247,13 +247,13 @@ class MCPClient:
 
         return items
 
-    def tools(self) -> List[Dict[str, Any]]:
+    def list_tools(self) -> List[Dict[str, Any]]:
         """
         List the provider's tools, following pagination to the end.
         """
         return self._paginate("tools/list", "tools")
 
-    def tool(self, name: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def call_tool(self, name: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Call a tool by name, with arguments matching its own input schema.
         """
@@ -264,13 +264,13 @@ class MCPClient:
 
         return self._send("tools/call", {"name": name, "arguments": args or {}})
 
-    def resources(self) -> List[Dict[str, Any]]:
+    def list_resources(self) -> List[Dict[str, Any]]:
         """
         List the provider's resources, following pagination to the end.
         """
         return self._paginate("resources/list", "resources")
 
-    def resource(self, uri: str) -> Dict[str, Any]:
+    def read_resource(self, uri: str) -> Dict[str, Any]:
         """
         Read a resource by URI.
         """
@@ -281,13 +281,13 @@ class MCPClient:
 
         return self._send("resources/read", {"uri": uri})
 
-    def prompts(self) -> List[Dict[str, Any]]:
+    def list_prompts(self) -> List[Dict[str, Any]]:
         """
         List the provider's prompts, following pagination to the end.
         """
         return self._paginate("prompts/list", "prompts")
 
-    def prompt(self, name: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def get_prompt(self, name: str, args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Get a prompt by name.
         """

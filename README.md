@@ -153,7 +153,7 @@ client = BundleUp(os.getenv('BUNDLEUP_API_KEY'))
 **Example `.env` file:**
 
 ```bash
-BUNDLEUP_API_KEY=bu_live_1234567890abcdefghijklmnopqrstuvwxyz
+BUNDLEUP_API_KEY=Zw7Lt7JacsDyMCEpnZdGptgnJaOdMzFVH9QtIthnL5RviYP5WeH6e9FWP2HzEO
 ```
 
 **Loading environment variables:**

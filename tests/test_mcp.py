@@ -116,7 +116,7 @@ class TestHandshake:
         add_handshake(mock_responses)
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, {"tools": [TOOL]}))
 
-        MCP(api_key, connection_id).connect().tools()
+        MCP(api_key, connection_id).connect().list_tools()
 
         sent = bodies(mock_responses)
         assert [message["method"] for message in sent] == [
@@ -132,8 +132,8 @@ class TestHandshake:
         mock_responses.add(responses.POST, MCP_URL, json=rpc(3, {"resources": []}))
 
         client = MCP(api_key, connection_id).connect()
-        client.tools()
-        client.resources()
+        client.list_tools()
+        client.list_resources()
 
         assert sum(1 for m in bodies(mock_responses) if m["method"] == "initialize") == 1
 
@@ -141,7 +141,7 @@ class TestHandshake:
         add_handshake(mock_responses, session_id="sess_abc")
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, {"tools": []}))
 
-        MCP(api_key, connection_id).connect().tools()
+        MCP(api_key, connection_id).connect().list_tools()
 
         assert "Mcp-Session-Id" not in mock_responses.calls[0].request.headers
         assert mock_responses.calls[2].request.headers["Mcp-Session-Id"] == "sess_abc"
@@ -156,12 +156,12 @@ class TestHandshake:
         client = MCP(api_key, connection_id).connect()
 
         with pytest.raises(Exception, match="Too many requests"):
-            client.tools()
+            client.list_tools()
 
         add_handshake(mock_responses)
         mock_responses.add(responses.POST, MCP_URL, json=rpc(3, {"tools": [TOOL]}))
 
-        assert client.tools() == [TOOL]
+        assert client.list_tools() == [TOOL]
 
 
 class TestTools:
@@ -171,7 +171,7 @@ class TestTools:
         add_handshake(mock_responses)
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, {"tools": [TOOL]}))
 
-        assert MCP(api_key, connection_id).connect().tools() == [TOOL]
+        assert MCP(api_key, connection_id).connect().list_tools() == [TOOL]
 
     def test_follows_pagination(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses)
@@ -180,7 +180,7 @@ class TestTools:
         mock_responses.add(responses.POST, MCP_URL, json=page_one)
         mock_responses.add(responses.POST, MCP_URL, json=page_two)
 
-        tools = MCP(api_key, connection_id).connect().tools()
+        tools = MCP(api_key, connection_id).connect().list_tools()
 
         assert len(tools) == 2
         assert bodies(mock_responses)[3]["params"] == {"cursor": "page2"}
@@ -200,7 +200,7 @@ class TestTools:
             content_type="text/event-stream",
         )
 
-        assert MCP(api_key, connection_id).connect().tools() == [TOOL]
+        assert MCP(api_key, connection_id).connect().list_tools() == [TOOL]
 
     def test_calls_a_tool(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses)
@@ -208,7 +208,7 @@ class TestTools:
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, content))
 
         client = MCP(api_key, connection_id).connect()
-        result = client.tool("create_issue", {"title": "Login broken"})
+        result = client.call_tool("create_issue", {"title": "Login broken"})
 
         assert result["content"][0]["text"] == "done"
         assert bodies(mock_responses)[2]["params"] == {
@@ -218,7 +218,7 @@ class TestTools:
 
     def test_requires_a_tool_name(self, api_key, connection_id):
         with pytest.raises(ValueError, match="Tool name is required"):
-            MCP(api_key, connection_id).connect().tool("")
+            MCP(api_key, connection_id).connect().call_tool("")
 
     def test_surfaces_a_json_rpc_error(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses)
@@ -226,7 +226,7 @@ class TestTools:
         mock_responses.add(responses.POST, MCP_URL, json=failure)
 
         with pytest.raises(Exception, match="Unknown tool"):
-            MCP(api_key, connection_id).connect().tool("nope")
+            MCP(api_key, connection_id).connect().call_tool("nope")
 
 
 class TestResourcesAndPrompts:
@@ -237,39 +237,39 @@ class TestResourcesAndPrompts:
         add_handshake(mock_responses)
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, {"resources": [resource]}))
 
-        assert MCP(api_key, connection_id).connect().resources() == [resource]
+        assert MCP(api_key, connection_id).connect().list_resources() == [resource]
 
     def test_reads_a_resource(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses)
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, {"contents": []}))
 
-        MCP(api_key, connection_id).connect().resource("file:///readme.md")
+        MCP(api_key, connection_id).connect().read_resource("file:///readme.md")
 
         assert bodies(mock_responses)[2]["params"] == {"uri": "file:///readme.md"}
 
     def test_requires_a_resource_uri(self, api_key, connection_id):
         with pytest.raises(ValueError, match="Resource URI is required"):
-            MCP(api_key, connection_id).connect().resource("")
+            MCP(api_key, connection_id).connect().read_resource("")
 
     def test_lists_prompts(self, api_key, connection_id, mock_responses):
         prompt = {"name": "summarize"}
         add_handshake(mock_responses)
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, {"prompts": [prompt]}))
 
-        assert MCP(api_key, connection_id).connect().prompts() == [prompt]
+        assert MCP(api_key, connection_id).connect().list_prompts() == [prompt]
 
     def test_gets_a_prompt(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses)
         mock_responses.add(responses.POST, MCP_URL, json=rpc(2, {"messages": []}))
 
-        MCP(api_key, connection_id).connect().prompt("summarize", {"id": "1"})
+        MCP(api_key, connection_id).connect().get_prompt("summarize", {"id": "1"})
 
         expected = {"name": "summarize", "arguments": {"id": "1"}}
         assert bodies(mock_responses)[2]["params"] == expected
 
     def test_requires_a_prompt_name(self, api_key, connection_id):
         with pytest.raises(ValueError, match="Prompt name is required"):
-            MCP(api_key, connection_id).connect().prompt("")
+            MCP(api_key, connection_id).connect().get_prompt("")
 
     def test_sends_an_arbitrary_method(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses)
@@ -302,13 +302,13 @@ class TestErrors:
         expected = r"Missing or invalid connection ID \(connection_invalid\)"
 
         with pytest.raises(Exception, match=expected):
-            MCP(api_key, connection_id).connect().tools()
+            MCP(api_key, connection_id).connect().list_tools()
 
     def test_falls_back_to_the_status(self, api_key, connection_id, mock_responses):
         mock_responses.add(responses.POST, MCP_URL, body="gateway timeout", status=504)
 
         with pytest.raises(Exception, match="MCP request failed with status 504."):
-            MCP(api_key, connection_id).connect().tools()
+            MCP(api_key, connection_id).connect().list_tools()
 
 
 class TestClose:
@@ -320,7 +320,7 @@ class TestClose:
         mock_responses.add(responses.DELETE, MCP_URL, body="", status=204)
 
         client = MCP(api_key, connection_id).connect()
-        client.tools()
+        client.list_tools()
         client.close()
 
         assert mock_responses.calls[-1].request.method == "DELETE"
@@ -345,14 +345,14 @@ class TestUnifiedMCP:
         add_handshake(mock_responses, url=UNIFY_MCP_URL)
         mock_responses.add(responses.POST, UNIFY_MCP_URL, json=rpc(2, {"tools": [TOOL]}))
 
-        assert UnifiedMCP(api_key, connection_id).tools() == [TOOL]
+        assert UnifiedMCP(api_key, connection_id).list_tools() == [TOOL]
         assert all(call.request.url.startswith(UNIFY_MCP_URL) for call in mock_responses.calls)
 
     def test_calls_a_tool(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses, url=UNIFY_MCP_URL)
         mock_responses.add(responses.POST, UNIFY_MCP_URL, json=rpc(2, {"content": []}))
 
-        UnifiedMCP(api_key, connection_id).tool("send_message", {"text": "hi"})
+        UnifiedMCP(api_key, connection_id).call_tool("send_message", {"text": "hi"})
 
         assert bodies(mock_responses)[2]["params"] == {
             "name": "send_message",
@@ -361,7 +361,7 @@ class TestUnifiedMCP:
 
     def test_requires_a_tool_name(self, api_key, connection_id):
         with pytest.raises(ValueError, match="Tool name is required"):
-            UnifiedMCP(api_key, connection_id).tool("")
+            UnifiedMCP(api_key, connection_id).call_tool("")
 
     def test_reuses_one_session_across_calls(self, api_key, connection_id, mock_responses):
         add_handshake(mock_responses, url=UNIFY_MCP_URL)
@@ -369,7 +369,7 @@ class TestUnifiedMCP:
         mock_responses.add(responses.POST, UNIFY_MCP_URL, json=rpc(3, {"content": []}))
 
         unified = UnifiedMCP(api_key, connection_id)
-        unified.tools()
-        unified.tool("send_message")
+        unified.list_tools()
+        unified.call_tool("send_message")
 
         assert sum(1 for m in bodies(mock_responses) if m["method"] == "initialize") == 1
