@@ -60,7 +60,6 @@ class TestUnifyInitialization:
         assert unify.drive._api_key == api_key
         assert unify.drive._connection_id == connection_id
 
-
     def test_me_has_correct_params(self, api_key, connection_id):
         """Test that the me client has correct parameters."""
         unify = Unify(api_key, connection_id)
