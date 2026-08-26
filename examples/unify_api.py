@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta, timezone
 
 from bundleup import BundleUp
 
@@ -25,6 +26,12 @@ except Exception as error:
 try:
     channels = unify.chat.channels({"limit": 10})
     print(f"Chat channels: {len(channels.get('data', []))}")
+
+    channel = next(iter(channels.get("data", [])), None)
+
+    if channel:
+        messages = unify.chat.messages(channel["id"], {"limit": 10})
+        print(f"Messages in {channel['name']}: {len(messages.get('data', []))}")
 except Exception as error:
     print(f"Failed to fetch chat channels: {error}")
 
@@ -37,5 +44,21 @@ except Exception as error:
 try:
     tickets = unify.ticketing.tickets({"limit": 10})
     print(f"Ticketing tickets: {len(tickets.get('data', []))}")
+
+    first = next(iter(tickets.get("data", [])), None)
+
+    if first:
+        ticket = unify.ticketing.ticket(first["id"])
+        print(f"Ticket {ticket['data']['id']}: {ticket['data']['title']}")
 except Exception as error:
     print(f"Failed to fetch tickets: {error}")
+
+try:
+    events = unify.calendar.events({
+        "starts_after": datetime.now(timezone.utc).isoformat(),
+        "starts_before": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        "limit": 10,
+    })
+    print(f"Calendar events: {len(events.get('data', []))}")
+except Exception as error:
+    print(f"Failed to fetch calendar events: {error}")

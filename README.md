@@ -82,7 +82,7 @@ Runnable examples are available in the [`examples/`](./examples) directory:
 
 - [`examples/basic_usage.py`](./examples/basic_usage.py) - Client setup, connections, integrations, and webhooks
 - [`examples/proxy_api.py`](./examples/proxy_api.py) - Proxy API GET request with a connection
-- [`examples/unify_api.py`](./examples/unify_api.py) - Unify Chat, Git, Ticketing, CRM, and Drive endpoint usage
+- [`examples/unify_api.py`](./examples/unify_api.py) - Unify Chat, Git, Ticketing, CRM, Drive, and Calendar endpoint usage
 - [`examples/README.md`](./examples/README.md) - Setup and execution instructions
 
 ## Quick Start
@@ -830,6 +830,39 @@ while True:
 print(f"Fetched {len(all_channels)} total channels")
 ```
 
+##### List Messages
+
+Messages in one channel, newest first. `author.name` is None on Slack, which returns only a user id on a message.
+
+```python
+result = unify.chat.messages('C123', {
+    'limit': 100,
+    'after': None,
+    'include_raw': False
+})
+
+print(f"Messages: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': '1755712345.123456',
+            'text': 'Deploy finished',
+            'author': {'id': 'U024BE7LH', 'name': None},
+            'created_at': '2026-08-20T18:32:25.123Z',
+            'thread_id': None
+        }
+    ],
+    'metadata': {
+        'next': 'cursor_def456'
+    }
+}
+```
+
 ##### Send Message
 
 Send a message to a channel on the connected chat platform.
@@ -1068,6 +1101,34 @@ sorted_by_date = sorted(
 )
 ```
 
+##### Get a Ticket
+
+Fetch one ticket by ID. Not supported by Basecamp, whose API only serves a to-do underneath its project.
+
+```python
+result = unify.ticketing.ticket('PROJ-123')
+
+print(f"Ticket: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': {
+        'id': 'PROJ-123',
+        'url': 'https://jira.example.com/browse/PROJ-123',
+        'title': 'Fix login bug',
+        'status': 'in_progress',
+        'description': 'Users are unable to log in',
+        'created_at': '2024-01-15T10:30:00Z',
+        'updated_at': '2024-01-20T14:22:00Z'
+    }
+}
+```
+
+A single resource carries no pagination, so there is no `metadata` on this response.
+
 #### CRM API
 
 The CRM API provides a unified interface for CRM platforms like Attio, HubSpot, PipeDrive, Salesforce and Zoho.
@@ -1168,6 +1229,49 @@ print(f"Files: {result['data']}")
 }
 ```
 
+#### Calendar API
+
+The Calendar API provides a unified interface for calendar and scheduling platforms like Google Calendar, Outlook, Calendly and Zoom.
+
+##### List Events
+
+`starts_after` and `starts_before` are required — the endpoint refuses an unbounded listing.
+
+```python
+result = unify.calendar.events({
+    'starts_after': '2026-09-01T00:00:00Z',
+    'starts_before': '2026-09-08T00:00:00Z',
+    'limit': 100,
+    'after': None,
+    'include_raw': False
+})
+
+print(f"Events: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': 'evt_123',
+            'title': 'Design review',
+            'description': 'Walk through the new onboarding flow',
+            'start_date': '2026-09-01T15:00:00Z',
+            'end_date': '2026-09-01T16:00:00Z',
+            'status': 'confirmed',
+            'url': 'https://calendar.google.com/event?eid=...'
+        }
+    ],
+    'metadata': {
+        'next': None
+    }
+}
+```
+
+Recurring events are expanded into their occurrences. All-day events carry a `YYYY-MM-DD` date rather than a timestamp. Attendees, conferencing links and organizers are available through `include_raw` or the Proxy API.
+
 ## Error Handling
 
 The SDK raises exceptions for errors. Always wrap SDK calls in try-except blocks for proper error handling.
@@ -1235,6 +1339,7 @@ bundleup/
     ├── ticketing.py         # Ticketing Unify API
     ├── crm.py               # CRM Unify API
     ├── drive.py             # Drive Unify API
+    ├── calendar.py          # Calendar Unify API
     └── types.py             # TypedDicts for Unify response shapes
 tests/                       # Test files
 ```

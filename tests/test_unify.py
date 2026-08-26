@@ -7,6 +7,7 @@ from bundleup.unify.chat import Chat
 from bundleup.unify.git import Git
 from bundleup.unify.ticketing import Ticketing
 from bundleup.unify.crm import CRM
+from bundleup.unify.calendar import Calendar
 from bundleup.unify.drive import Drive
 from bundleup.unify.me import Me
 
@@ -23,6 +24,7 @@ class TestUnifyInitialization:
         assert isinstance(unify.ticketing, Ticketing)
         assert isinstance(unify.crm, CRM)
         assert isinstance(unify.drive, Drive)
+        assert isinstance(unify.calendar, Calendar)
         assert isinstance(unify._me, Me)
 
     def test_chat_has_correct_params(self, api_key, connection_id):
@@ -217,6 +219,25 @@ class TestDriveInitialization:
 
         assert hasattr(drive, 'files')
         assert callable(drive.files)
+
+
+class TestCalendarInitialization:
+    """Test Calendar class initialization."""
+
+    def test_init_with_valid_params(self, api_key, connection_id):
+        """Test initialization with valid API key and connection ID."""
+        calendar = Calendar(api_key, connection_id)
+
+        assert calendar._api_key == api_key
+        assert calendar._connection_id == connection_id
+        assert calendar.base_url == "https://unify.bundleup.io"
+
+    def test_has_events_method(self, api_key, connection_id):
+        """Test that Calendar has events method."""
+        calendar = Calendar(api_key, connection_id)
+
+        assert hasattr(calendar, 'events')
+        assert callable(calendar.events)
 
 
 class TestMeInitialization:

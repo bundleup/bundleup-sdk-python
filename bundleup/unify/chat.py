@@ -2,7 +2,12 @@ from typing import Any, Dict, Optional, cast
 from urllib.parse import quote
 
 from .base import Base
-from .types import ChannelsResponse, MessageResponse, UsersResponse
+from .types import (
+    ChannelsResponse,
+    MessageResponse,
+    MessagesResponse,
+    UsersResponse,
+)
 
 
 class Chat(Base):
@@ -29,6 +34,27 @@ class Chat(Base):
             raise Exception(f"Failed to fetch chat/channels: {response.status_code}")
 
         return cast(ChannelsResponse, response.json())
+
+    def messages(
+        self, channel_id: str, params: Optional[Dict[str, Any]] = None
+    ) -> MessagesResponse:
+        """
+        List messages in a chat channel
+
+        Newest first. ``author.name`` is None on Slack, which returns only a
+        user id on a message.
+        """
+        if not channel_id:
+            raise ValueError("channel_id is required to fetch messages.")
+
+        endpoint = f"chat/channels/{quote(channel_id, safe='')}/messages"
+        url = self._build_url(endpoint)
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
+
+        return cast(MessagesResponse, response.json())
 
     def message(self, channel_id: str, text: str) -> MessageResponse:
         """

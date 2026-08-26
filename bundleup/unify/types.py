@@ -55,6 +55,24 @@ class MessageResponse(TypedDict):
     data: Dict[str, Any]
 
 
+class ChatAuthor(TypedDict):
+    id: Optional[str]
+    name: Optional[str]
+
+
+class ChatMessage(TypedDict):
+    id: str
+    text: Optional[str]
+    author: Optional[ChatAuthor]
+    created_at: Optional[str]
+    thread_id: Optional[str]
+
+
+class MessagesResponse(TypedDict):
+    data: List[ChatMessage]
+    metadata: Metadata
+
+
 # CRM
 
 class CrmCompany(TypedDict):
@@ -94,6 +112,23 @@ class DriveFile(TypedDict):
 
 class FilesResponse(TypedDict):
     data: List[DriveFile]
+    metadata: Metadata
+
+
+# Calendar
+
+class CalendarEvent(TypedDict):
+    id: str
+    title: Optional[str]
+    description: Optional[str]
+    start_date: Optional[str]
+    end_date: Optional[str]
+    status: Optional[str]
+    url: Optional[str]
+
+
+class EventsResponse(TypedDict):
+    data: List[CalendarEvent]
     metadata: Metadata
 
 
@@ -200,3 +235,18 @@ class TicketingTicket(TypedDict):
 class TicketsResponse(TypedDict):
     data: List[TicketingTicket]
     metadata: Metadata
+
+
+class Ticket(TypedDict):
+    id: str
+    title: str
+    status: Optional[str]
+    url: Optional[str]
+    description: Optional[str]
+    created_at: Optional[str]
+    updated_at: Optional[str]
+
+
+# A single resource carries no pagination, so this is not a paginated response.
+class TicketResponse(TypedDict):
+    data: Ticket

@@ -10,6 +10,7 @@ import responses
 
 from bundleup.unify.chat import Chat
 from bundleup.unify.crm import CRM
+from bundleup.unify.calendar import Calendar
 from bundleup.unify.drive import Drive
 from bundleup.unify.git import Git
 from bundleup.unify.me import Me
@@ -107,6 +108,33 @@ class TestChat:
         with pytest.raises(Exception, match="Failed to post chat/channels/C123/message: 403"):
             Chat(api_key, connection_id).message("C123", "hi")
 
+    def test_fetches_messages(self, api_key, connection_id, mock_responses):
+        url = f"{BASE}/chat/channels/C123/messages"
+        mock_responses.add(responses.GET, url, json=PAGE)
+
+        Chat(api_key, connection_id).messages("C123")
+
+        assert mock_responses.calls[0].request.url.startswith(url)
+
+    def test_encodes_the_channel_id_for_messages(self, api_key, connection_id, mock_responses):
+        url = f"{BASE}/chat/channels/team%2Fgeneral/messages"
+        mock_responses.add(responses.GET, url, json=PAGE)
+
+        Chat(api_key, connection_id).messages("team/general")
+
+        assert "team%2Fgeneral/messages" in mock_responses.calls[0].request.url
+
+    def test_requires_a_channel_id_for_messages(self, api_key, connection_id):
+        with pytest.raises(ValueError, match="channel_id is required to fetch messages."):
+            Chat(api_key, connection_id).messages("")
+
+    def test_raises_when_messages_fail(self, api_key, connection_id, mock_responses):
+        url = f"{BASE}/chat/channels/C123/messages"
+        mock_responses.add(responses.GET, url, json={}, status=404)
+
+        with pytest.raises(Exception, match="Failed to fetch chat/channels/C123/messages: 404"):
+            Chat(api_key, connection_id).messages("C123")
+
 
 class TestCRM:
     """crm/*"""
@@ -148,6 +176,48 @@ class TestDrive:
             Drive(api_key, connection_id).files()
 
 
+class TestCalendar:
+    """calendar/*"""
+
+    WINDOW = {"starts_after": "2026-09-01T00:00:00Z", "starts_before": "2026-09-08T00:00:00Z"}
+
+    def test_fetches_events(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/calendar/events", json=PAGE)
+
+        Calendar(api_key, connection_id).events(self.WINDOW)
+
+        assert mock_responses.calls[0].request.url.startswith(f"{BASE}/calendar/events")
+
+    def test_passes_through_the_window(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/calendar/events", json=PAGE)
+
+        Calendar(api_key, connection_id).events(self.WINDOW)
+
+        url = mock_responses.calls[0].request.url
+
+        assert "starts_after=2026-09-01T00%3A00%3A00Z" in url
+        assert "starts_before=2026-09-08T00%3A00%3A00Z" in url
+
+    @pytest.mark.parametrize(
+        "params",
+        [
+            None,
+            {},
+            {"starts_after": "2026-09-01T00:00:00Z"},
+            {"starts_before": "2026-09-08T00:00:00Z"},
+        ],
+    )
+    def test_requires_the_window(self, api_key, connection_id, params):
+        with pytest.raises(ValueError, match="starts_after and starts_before are required"):
+            Calendar(api_key, connection_id).events(params)
+
+    def test_raises_on_failure(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/calendar/events", json={}, status=502)
+
+        with pytest.raises(Exception, match="Failed to fetch calendar/events: 502"):
+            Calendar(api_key, connection_id).events(self.WINDOW)
+
+
 class TestTicketing:
     """ticketing/*"""
 
@@ -163,6 +233,30 @@ class TestTicketing:
 
         with pytest.raises(Exception, match="Failed to fetch ticketing/tickets: 502"):
             Ticketing(api_key, connection_id).tickets()
+
+    def test_fetches_a_single_ticket(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets/TKT-1", json={"data": {}})
+
+        Ticketing(api_key, connection_id).ticket("TKT-1")
+
+        assert mock_responses.calls[0].request.url.startswith(f"{BASE}/ticketing/tickets/TKT-1")
+
+    def test_encodes_the_ticket_id(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets/a%2Fb", json={"data": {}})
+
+        Ticketing(api_key, connection_id).ticket("a/b")
+
+        assert "ticketing/tickets/a%2Fb" in mock_responses.calls[0].request.url
+
+    def test_requires_a_ticket_id(self, api_key, connection_id):
+        with pytest.raises(ValueError, match="ticket_id is required"):
+            Ticketing(api_key, connection_id).ticket("")
+
+    def test_raises_when_a_single_ticket_fails(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets/TKT-1", json={}, status=404)
+
+        with pytest.raises(Exception, match="Failed to fetch ticketing/tickets/TKT-1: 404"):
+            Ticketing(api_key, connection_id).ticket("TKT-1")
 
 
 SCOPED = ["pulls", "tags", "releases", "branches", "commits"]
