@@ -5,6 +5,7 @@ from .base import Base
 from .types import (
     BranchesResponse,
     CommitsResponse,
+    IssuesResponse,
     PullsResponse,
     ReleasesResponse,
     ReposResponse,
@@ -40,6 +41,22 @@ class Git(Base):
             raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
 
         return cast(PullsResponse, response.json())
+
+    def issues(self, repo_name: str, params: Optional[Dict[str, Any]] = None) -> IssuesResponse:
+        """
+        List issues for a specific repository
+        """
+        if not repo_name:
+            raise ValueError("repo_name is required to fetch issues.")
+
+        url = self._build_url(f"git/repos/{quote(repo_name, safe='')}/issues")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            endpoint = f"git/repos/{quote(repo_name, safe='')}/issues"
+            raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
+
+        return cast(IssuesResponse, response.json())
 
     def tags(self, repo_name: str, params: Optional[Dict[str, Any]] = None) -> TagsResponse:
         """

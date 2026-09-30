@@ -159,6 +159,19 @@ class GitPull(TypedDict):
     merged_at: Optional[str]
 
 
+class GitIssue(TypedDict):
+    id: int
+    number: int
+    title: str
+    description: Optional[str]
+    state: str
+    url: str
+    user: Optional[str]
+    created_at: str
+    updated_at: str
+    closed_at: Optional[str]
+
+
 class GitTag(TypedDict):
     name: str
     commit_sha: str
@@ -200,6 +213,11 @@ class PullsResponse(TypedDict):
     metadata: Metadata
 
 
+class IssuesResponse(TypedDict):
+    data: List[GitIssue]
+    metadata: Metadata
+
+
 class TagsResponse(TypedDict):
     data: List[GitTag]
     metadata: Metadata
@@ -234,6 +252,21 @@ class TicketingTicket(TypedDict):
 
 class TicketsResponse(TypedDict):
     data: List[TicketingTicket]
+    metadata: Metadata
+
+
+class TicketingProject(TypedDict):
+    id: str
+    name: str
+    status: Optional[str]
+    url: Optional[str]
+    description: Optional[str]
+    created_at: Optional[str]
+    updated_at: Optional[str]
+
+
+class ProjectsResponse(TypedDict):
+    data: List[TicketingProject]
     metadata: Metadata
 
 

@@ -1,3 +1,4 @@
+from .auth import Auth
 from .mcp import MCP, MCPClient
 from .proxy import Proxy
 from .unify import Unify
@@ -16,6 +17,7 @@ class BundleUp:
         self._api_key = api_key
 
         # Initialize resource instances
+        self.auth = Auth(api_key)
         self.connection = Connection(api_key)
         self.integration = Integration(api_key)
         self.webhook = Webhook(api_key)
@@ -39,4 +41,4 @@ class BundleUp:
         return MCP(self._api_key, connection_id)
 
 
-__all__ = ["BundleUp", "MCP", "MCPClient", "Proxy", "Unify"]
+__all__ = ["Auth", "BundleUp", "MCP", "MCPClient", "Proxy", "Unify"]

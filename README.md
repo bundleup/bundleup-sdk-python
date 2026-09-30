@@ -70,6 +70,7 @@ The BundleUp SDK is tested and supported on:
 - 🔌 **100+ Integrations** - Connect to Slack, GitHub, Jira, Linear, and many more
 - 🎯 **Unified API** - Consistent interface across all integrations via Unify API
 - 🔑 **Proxy API** - Direct access to underlying integration APIs
+- 🤖 **MCP** - Connect agents to a provider's own MCP server or to BundleUp's Unified MCP
 - 🪶 **Lightweight** - Minimal dependencies
 - 🛡️ **Error Handling** - Comprehensive error messages and validation
 - 📚 **Well Documented** - Extensive documentation and examples
@@ -212,6 +213,10 @@ client = BundleUp(app.config['BUNDLEUP_API_KEY'])
 
 ## Core Concepts
 
+### Auth API
+
+The **Auth API** runs the hosted authorization flow: build the URL that sends a user to connect an integration, then exchange the one-time `code` from the redirect for a `connection_id`. See [Authorization Flow](https://docs.bundleup.io/authorization-flow).
+
 ### Platform API
 
 The **Platform API** provides access to core BundleUp features like managing connections and integrations. Use this API to list, retrieve, and delete connections, as well as discover available integrations.
@@ -223,6 +228,10 @@ The **Proxy API** allows you to make direct HTTP requests to the underlying inte
 ### Unify API
 
 The **Unify API** provides a standardized, normalized interface across different integrations. For example, you can fetch chat channels from Slack, Discord, or Microsoft Teams using the same API call.
+
+### MCP API
+
+The **MCP API** reaches a provider's own MCP server using a connection's stored credentials. Tools are defined by the provider, not by BundleUp. Because the connection is chosen per client, one agent can serve many end users without ever handling a token.
 
 ## API Reference
 
@@ -591,6 +600,62 @@ def verify_signature(payload: bytes, signature: str) -> bool:
     ).hexdigest()
     return hmac.compare_digest(computed, signature)
 ```
+
+### Auth API
+
+Connect an end user's account and get back a `connection_id`. See [Authorization Flow](https://docs.bundleup.io/authorization-flow) for the full flow.
+
+#### Build the Authorization URL
+
+```python
+url = client.auth.build_authorization_url(
+    client_id='your-client-id',
+    integration_id='github',
+    redirect_uri='https://app.example.com/callback',
+    external_id='user_42',  # optional
+    state='random-csrf-token'  # optional
+)
+
+# Redirect the user to `url`
+```
+
+**Parameters:**
+
+- `client_id` (str, required): Your workspace client ID
+- `integration_id` (str, required): The integration to connect
+- `redirect_uri` (str, required): Must exactly match a redirect URI registered in your dashboard
+- `external_id` (str, optional): Your own reference, stored on the connection
+- `state` (str, optional): Returned unchanged on the redirect
+
+#### Exchange the Code for a Connection
+
+BundleUp redirects back to `redirect_uri` with a one-time `code`. Exchange it server-side:
+
+```python
+connection = client.auth.get_connection_from_code(
+    code=request.args['code'],
+    redirect_uri='https://app.example.com/callback'
+)
+
+print(connection['connection_id'])
+```
+
+**Parameters:**
+
+- `code` (str, required): The `code` query parameter from the redirect
+- `redirect_uri` (str, required): The same redirect URI used to build the authorization URL
+
+**Response:**
+
+```python
+{
+    'connection_id': 'conn_abc123',
+    'external_id': 'user_42',
+    'integration_id': 'github'
+}
+```
+
+The code expires after 5 minutes and can only be exchanged once. An invalid, expired or reused code raises an `Exception` that includes the API's error body. Missing arguments raise `ValueError`.
 
 ### Proxy API
 
@@ -970,6 +1035,38 @@ print(f"Pull Requests: {result['data']}")
 }
 ```
 
+##### List Issues
+
+```python
+result = unify.git.issues('organization/repo-name', {'limit': 20})
+
+print(f"Issues: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': 67890,
+            'number': 17,
+            'title': 'Timestamps drift on retry',
+            'description': 'Retried requests report the first attempt time',
+            'state': 'open',
+            'url': 'https://github.com/org/repo/issues/17',
+            'user': 'john-doe',
+            'created_at': '2024-01-15T10:30:00Z',
+            'updated_at': '2024-01-20T14:22:00Z',
+            'closed_at': None
+        }
+    ],
+    'metadata': {
+        'next': None
+    }
+}
+```
+
 ##### List Tags
 
 ```python
@@ -1053,6 +1150,37 @@ print(f"Branches: {result['data']}")
 }
 ```
 
+##### List Commits
+
+```python
+result = unify.git.commits('organization/repo-name', {'branch': 'main', 'limit': 20})
+
+print(f"Commits: {result['data']}")
+```
+
+`branch` is optional and accepts a branch name, tag or commit SHA. When it is omitted the
+provider's default branch is used.
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'sha': 'abc123def4567890abc123def4567890abc123de',
+            'message': 'Add commits endpoint',
+            'url': 'https://github.com/org/repo/commit/abc123def4567890abc123def4567890abc123de',
+            'author': 'Jane Doe',
+            'author_email': 'jane@example.com',
+            'committed_at': '2024-01-15T10:30:00Z'
+        }
+    ],
+    'metadata': {
+        'next': None
+    }
+}
+```
+
 #### Ticketing API
 
 The Ticketing API provides a unified interface for ticketing and project management platforms like Jira, Linear, and Asana.
@@ -1128,6 +1256,41 @@ print(f"Ticket: {result['data']}")
 ```
 
 A single resource carries no pagination, so there is no `metadata` on this response.
+
+##### List Projects
+
+```python
+result = unify.ticketing.projects({
+    'limit': 100,
+    'after': None,
+    'include_raw': False
+})
+
+print(f"Projects: {result['data']}")
+```
+
+**Response:**
+
+```python
+{
+    'data': [
+        {
+            'id': '10001',
+            'name': 'Website Redesign',
+            'status': 'active',
+            'url': 'https://jira.example.com/browse/PROJ',
+            'description': 'All the work for the new marketing site',
+            'created_at': '2024-01-15T10:30:00Z',
+            'updated_at': '2024-01-20T14:22:00Z'
+        }
+    ],
+    'metadata': {
+        'next': 'cursor_def456'
+    }
+}
+```
+
+**Note:** Not every platform returns every field. Jira does not expose creation or update timestamps for projects, so `created_at` and `updated_at` are `None` for Jira connections, and `status` is only set when Jira reports whether the project is archived.
 
 #### CRM API
 
@@ -1272,6 +1435,222 @@ print(f"Events: {result['data']}")
 
 Recurring events are expanded into their occurrences. All-day events carry a `YYYY-MM-DD` date rather than a timestamp. Attendees, conferencing links and organizers are available through `include_raw` or the Proxy API.
 
+### MCP API
+
+Reach a provider's own MCP server using a connection's credentials. BundleUp injects and refreshes the access token, so the connection ID is the only thing your agent needs to know about a user.
+
+Supported for providers that run a first-party MCP server — see the [integrations page](https://www.bundleup.io/integrations). Others return an `mcp_not_supported` error.
+
+`post` and `delete` are transport only, like the Proxy API — responses come back untouched as `requests.Response` objects. `connect()` layers a managed session on top when you would rather not drive the protocol yourself.
+
+#### Creating an MCP Client
+
+```python
+mcp = client.mcp('conn_123abc')
+```
+
+#### Managed Sessions
+
+`connect()` returns a client that handles the handshake, session ID and response decoding, and exposes what the provider offers.
+
+```python
+mcp = client.mcp('conn_123abc').connect()
+
+tools = mcp.list_tools()
+result = mcp.call_tool('create_issue', {'title': 'Login broken'})
+
+mcp.close()
+```
+
+Resources and prompts follow the same shape:
+
+```python
+resources = mcp.list_resources()
+contents = mcp.read_resource('file:///readme.md')
+
+prompts = mcp.list_prompts()
+messages = mcp.get_prompt('summarize', {'id': '123'})
+```
+
+Anything else in the protocol:
+
+```python
+mcp.request('logging/setLevel', {'level': 'debug'})
+```
+
+The handshake runs lazily on the first call and once per client, list methods follow `nextCursor` to the end, and `text/event-stream` responses are decoded for you. Errors raise an `Exception` with the provider's message, or BundleUp's with its code appended — `Missing or invalid connection ID (connection_invalid)`.
+
+Call `close()` when you are done to end the session upstream.
+
+#### Model-Hosted MCP
+
+OpenAI and Anthropic can connect to an MCP server themselves, with no tool mapping or dispatch loop on your side. Both accept only a single credential and no custom headers, so `hosted()` returns the server URL alongside the API key and connection joined into one bearer.
+
+```python
+hosted = client.mcp('conn_123abc').hosted()
+
+response = openai.responses.create(
+    model='gpt-4o',
+    input='What issues are assigned to me?',
+    tools=[
+        {
+            'type': 'mcp',
+            'server_label': 'linear',
+            'server_url': hosted['url'],
+            'authorization': hosted['token'],
+            'require_approval': 'never',
+        }
+    ],
+)
+```
+
+Anthropic's connector takes the same pair as `url` and `authorization_token`. `client.unify('conn_123abc').mcp.hosted()` returns them for Unified MCP.
+
+`server_url` must be exactly the URL `hosted()` returns — the proxy rebuilds the upstream URL from the provider's own base, so any path or query you append is ignored rather than rejected.
+
+This sends your API key to the model provider, whose servers make the request. Use an MCP client in your own backend if that is not acceptable.
+
+#### Using an MCP Client Library
+
+`transport()` returns the URL and headers if you would rather use an existing MCP client, such as the official [`mcp`](https://pypi.org/project/mcp/) package.
+
+```python
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
+
+transport = client.mcp('conn_123abc').transport()
+
+async with streamablehttp_client(transport['url'], headers=transport['headers']) as (read, write, _):
+    async with ClientSession(read, write) as session:
+        await session.initialize()
+        result = await session.list_tools()
+```
+
+#### Sending JSON-RPC Directly
+
+MCP requires an `initialize` handshake before any other method. The session ID comes back on that first response and must be sent on every call after it.
+
+```python
+mcp = client.mcp('conn_123abc')
+
+# 1. Handshake
+init = mcp.post({
+    'jsonrpc': '2.0',
+    'id': 1,
+    'method': 'initialize',
+    'params': {
+        'protocolVersion': '2025-06-18',
+        'capabilities': {},
+        'clientInfo': {'name': 'my-agent', 'version': '1.0.0'},
+    },
+})
+
+session_id = init.headers.get('mcp-session-id')
+session = {'Mcp-Session-Id': session_id} if session_id else {}
+
+# 2. Confirm the handshake (a notification — no id, no response body)
+mcp.post({'jsonrpc': '2.0', 'method': 'notifications/initialized'}, session)
+
+# 3. List tools
+response = mcp.post({'jsonrpc': '2.0', 'id': 2, 'method': 'tools/list'}, session)
+result = parse(response)['result']
+
+print(result['tools'])
+```
+
+Providers may answer with `text/event-stream` rather than JSON, so responses need unwrapping either way:
+
+```python
+import json
+
+def parse(response):
+    if 'text/event-stream' not in response.headers.get('content-type', ''):
+        return response.json()
+
+    data = '\n'.join(
+        line[5:].strip() for line in response.text.splitlines() if line.startswith('data:')
+    )
+
+    return json.loads(data)
+```
+
+Tool lists can be paginated. If `result['nextCursor']` is set, call `tools/list` again with `'params': {'cursor': result['nextCursor']}` until it comes back empty.
+
+Calling a tool follows the same shape:
+
+```python
+response = mcp.post({
+    'jsonrpc': '2.0',
+    'id': 3,
+    'method': 'tools/call',
+    'params': {'name': 'create_issue', 'arguments': {'title': 'Login broken'}},
+}, session)
+```
+
+#### Sessions
+
+MCP sessions live on the provider's server — BundleUp holds no session state. Close one when you are done:
+
+```python
+mcp.delete({'Mcp-Session-Id': session_id})
+```
+
+#### Errors
+
+BundleUp rejects a request before it reaches the provider by returning an HTTP error with a JSON body — the response is passed straight through, so check `response.ok` yourself.
+
+```python
+response = mcp.post(body)
+
+if not response.ok:
+    error = response.json()
+    # connection_invalid, connection_refresh_failed, mcp_not_supported, rate_limit
+    print(error['code'], error['message'])
+```
+
+Every JSON-RPC message counts toward the rate limit of 100 requests per 60 seconds, per connection — including the `initialize` handshake.
+
+#### Merging Several Connections
+
+An agent often needs more than one provider for the same end user. There is no merge helper in the SDK — how tools are namespaced, filtered and recovered from differs enough per agent that it is better written where you can see it:
+
+```python
+clients = {
+    'slack': client.mcp(user.slack_connection).connect(),
+    'linear': client.mcp(user.linear_connection).connect(),
+    'crm': client.unify(user.hubspot_connection).mcp,
+}
+
+# One namespaced list: slack__send_message, linear__create_issue, …
+tools = [
+    {**tool, 'name': f"{label}__{tool['name']}"}
+    for label, mcp in clients.items()
+    for tool in mcp.list_tools()
+]
+
+# Route a call back to the client that owns it
+def call(name, args):
+    label, _, tool_name = name.partition('__')
+    return clients[label].call_tool(tool_name, args)
+```
+
+Anything that exposes `list_tools()` and `call_tool(name, args)` fits the same shape, so an internal tool layer of your own can sit in that map alongside BundleUp connections.
+
+Two things worth handling that the sketch above skips. **Filter before you hand the list to a model** — three providers is easily sixty tools, and accuracy drops as that list grows, so select the ones the agent actually needs rather than passing everything. And decide what an unreachable provider should do: as written, one failing `list_tools()` raises and fails the whole list, while wrapping each call in `try`/`except` lets the others through.
+
+#### Unified MCP
+
+BundleUp's normalized tools instead of the provider's, on the same protocol. Tools only — Unified MCP exposes no resources or prompts.
+
+```python
+mcp = client.unify('conn_123abc').mcp
+
+tools = mcp.list_tools()
+result = mcp.call_tool('send_message', {'text': 'Deploy finished'})
+```
+
+`unify.mcp` is created once per `Unify` instance, so the handshake runs once no matter how often you read it. The server itself is stateless and POST-only, so there is no session to close.
+
 ## Error Handling
 
 The SDK raises exceptions for errors. Always wrap SDK calls in try-except blocks for proper error handling.
@@ -1325,7 +1704,9 @@ black bundleup
 ```
 bundleup/
 ├── __init__.py              # Main entry point
+├── auth.py                  # Auth API (authorization URL + code exchange)
 ├── proxy.py                 # Proxy API implementation
+├── mcp.py                   # MCP API (transport + managed sessions)
 ├── resources/
 │   ├── base.py              # Base resource class
 │   ├── connection.py        # Connections API

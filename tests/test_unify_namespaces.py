@@ -234,6 +234,22 @@ class TestTicketing:
         with pytest.raises(Exception, match="Failed to fetch ticketing/tickets: 502"):
             Ticketing(api_key, connection_id).tickets()
 
+    def test_fetches_projects(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/ticketing/projects", json=PAGE)
+
+        Ticketing(api_key, connection_id).projects({"limit": 5, "after": "cursor_1"})
+
+        url = mock_responses.calls[0].request.url
+        assert url.startswith(f"{BASE}/ticketing/projects")
+        assert "limit=5" in url
+        assert "after=cursor_1" in url
+
+    def test_raises_when_projects_fails(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/ticketing/projects", json={}, status=502)
+
+        with pytest.raises(Exception, match="Failed to fetch ticketing/projects: 502"):
+            Ticketing(api_key, connection_id).projects()
+
     def test_fetches_a_single_ticket(self, api_key, connection_id, mock_responses):
         mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets/TKT-1", json={"data": {}})
 
@@ -259,7 +275,7 @@ class TestTicketing:
             Ticketing(api_key, connection_id).ticket("TKT-1")
 
 
-SCOPED = ["pulls", "tags", "releases", "branches", "commits"]
+SCOPED = ["pulls", "issues", "tags", "releases", "branches", "commits"]
 
 
 class TestGit:

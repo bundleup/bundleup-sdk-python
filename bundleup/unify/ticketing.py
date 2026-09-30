@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, cast
 from urllib.parse import quote
 
 from .base import Base
-from .types import TicketResponse, TicketsResponse
+from .types import ProjectsResponse, TicketResponse, TicketsResponse
 
 
 class Ticketing(Base):
@@ -36,3 +36,15 @@ class Ticketing(Base):
             raise Exception(f"Failed to fetch {endpoint}: {response.status_code}")
 
         return cast(TicketResponse, response.json())
+
+    def projects(self, params: Optional[Dict[str, Any]] = None) -> ProjectsResponse:
+        """
+        List ticketing projects
+        """
+        url = self._build_url("ticketing/projects")
+        response = self._connection.get(url, params=params)
+
+        if not response.ok:
+            raise Exception(f"Failed to fetch ticketing/projects: {response.status_code}")
+
+        return cast(ProjectsResponse, response.json())
