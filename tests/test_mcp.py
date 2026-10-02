@@ -63,4 +63,3 @@ class TestTransport:
         MCP(api_key, connection_id).delete({"Mcp-Session-Id": "sess_abc"})
 
         assert mock_responses.calls[0].request.headers["Mcp-Session-Id"] == "sess_abc"
-
