@@ -70,7 +70,7 @@ The BundleUp SDK is tested and supported on:
 - 🔌 **100+ Integrations** - Connect to Slack, GitHub, Jira, Linear, and many more
 - 🎯 **Unified API** - Consistent interface across all integrations via Unify API
 - 🔑 **Proxy API** - Direct access to underlying integration APIs
-- 🤖 **MCP** - Connect agents to a provider's own MCP server or to BundleUp's Unified MCP
+- 🤖 **MCP** - Hand a connection to any MCP client, or to OpenAI and Anthropic's hosted MCP
 - 🪶 **Lightweight** - Minimal dependencies
 - 🛡️ **Error Handling** - Comprehensive error messages and validation
 - 📚 **Well Documented** - Extensive documentation and examples
@@ -1441,46 +1441,13 @@ Reach a provider's own MCP server using a connection's credentials. BundleUp inj
 
 Supported for providers that run a first-party MCP server — see the [integrations page](https://www.bundleup.io/integrations). Others return an `mcp_not_supported` error.
 
-`post` and `delete` are transport only, like the Proxy API — responses come back untouched as `requests.Response` objects. `connect()` layers a managed session on top when you would rather not drive the protocol yourself.
+BundleUp does not ship an MCP client. Hand `hosted()` or `transport()` to the one you already use, or send JSON-RPC yourself with `post` and `delete`, which return the response untouched as `requests.Response` objects, like the Proxy API.
 
-#### Creating an MCP Client
+#### Creating an MCP Instance
 
 ```python
 mcp = client.mcp('conn_123abc')
 ```
-
-#### Managed Sessions
-
-`connect()` returns a client that handles the handshake, session ID and response decoding, and exposes what the provider offers.
-
-```python
-mcp = client.mcp('conn_123abc').connect()
-
-tools = mcp.list_tools()
-result = mcp.call_tool('create_issue', {'title': 'Login broken'})
-
-mcp.close()
-```
-
-Resources and prompts follow the same shape:
-
-```python
-resources = mcp.list_resources()
-contents = mcp.read_resource('file:///readme.md')
-
-prompts = mcp.list_prompts()
-messages = mcp.get_prompt('summarize', {'id': '123'})
-```
-
-Anything else in the protocol:
-
-```python
-mcp.request('logging/setLevel', {'level': 'debug'})
-```
-
-The handshake runs lazily on the first call and once per client, list methods follow `nextCursor` to the end, and `text/event-stream` responses are decoded for you. Errors raise an `Exception` with the provider's message, or BundleUp's with its code appended — `Missing or invalid connection ID (connection_invalid)`.
-
-Call `close()` when you are done to end the session upstream.
 
 #### Model-Hosted MCP
 
@@ -1504,7 +1471,7 @@ response = openai.responses.create(
 )
 ```
 
-Anthropic's connector takes the same pair as `url` and `authorization_token`. `client.unify('conn_123abc').mcp.hosted()` returns them for Unified MCP.
+Anthropic's connector takes the same pair as `url` and `authorization_token`.
 
 `server_url` must be exactly the URL `hosted()` returns — the proxy rebuilds the upstream URL from the provider's own base, so any path or query you append is ignored rather than rejected.
 
@@ -1610,46 +1577,30 @@ if not response.ok:
 
 Every JSON-RPC message counts toward the rate limit of 100 requests per 60 seconds, per connection — including the `initialize` handshake.
 
-#### Merging Several Connections
+#### Several Connections
 
-An agent often needs more than one provider for the same end user. There is no merge helper in the SDK — how tools are namespaced, filtered and recovered from differs enough per agent that it is better written where you can see it:
-
-```python
-clients = {
-    'slack': client.mcp(user.slack_connection).connect(),
-    'linear': client.mcp(user.linear_connection).connect(),
-    'crm': client.unify(user.hubspot_connection).mcp,
-}
-
-# One namespaced list: slack__send_message, linear__create_issue, …
-tools = [
-    {**tool, 'name': f"{label}__{tool['name']}"}
-    for label, mcp in clients.items()
-    for tool in mcp.list_tools()
-]
-
-# Route a call back to the client that owns it
-def call(name, args):
-    label, _, tool_name = name.partition('__')
-    return clients[label].call_tool(tool_name, args)
-```
-
-Anything that exposes `list_tools()` and `call_tool(name, args)` fits the same shape, so an internal tool layer of your own can sit in that map alongside BundleUp connections.
-
-Two things worth handling that the sketch above skips. **Filter before you hand the list to a model** — three providers is easily sixty tools, and accuracy drops as that list grows, so select the ones the agent actually needs rather than passing everything. And decide what an unreachable provider should do: as written, one failing `list_tools()` raises and fails the whole list, while wrapping each call in `try`/`except` lets the others through.
-
-#### Unified MCP
-
-BundleUp's normalized tools instead of the provider's, on the same protocol. Tools only — Unified MCP exposes no resources or prompts.
+An agent often needs more than one provider for the same end user. With model-hosted MCP there is nothing to merge — pass one `mcp` tool per connection and the model provider keeps them apart by `server_label`:
 
 ```python
-mcp = client.unify('conn_123abc').mcp
+connections = {'slack': user.slack_connection, 'linear': user.linear_connection}
 
-tools = mcp.list_tools()
-result = mcp.call_tool('send_message', {'text': 'Deploy finished'})
+tools = []
+
+for label, connection_id in connections.items():
+    hosted = client.mcp(connection_id).hosted()
+
+    tools.append({
+        'type': 'mcp',
+        'server_label': label,
+        'server_url': hosted['url'],
+        'authorization': hosted['token'],
+        'require_approval': 'never',
+    })
 ```
 
-`unify.mcp` is created once per `Unify` instance, so the handshake runs once no matter how often you read it. The server itself is stateless and POST-only, so there is no session to close.
+With an MCP client in your own backend, open one client per connection from its `transport()`, prefix each tool name with a label (`slack__send_message`), and route calls back by that prefix. There is no merge helper in the SDK — how tools are namespaced, filtered and recovered from differs enough per agent that it is better written where you can see it.
+
+**Filter before you hand tools to a model** — three providers is easily sixty tools, and accuracy drops as that list grows, so give the agent only the ones it needs.
 
 ## Error Handling
 
@@ -1706,7 +1657,7 @@ bundleup/
 ├── __init__.py              # Main entry point
 ├── auth.py                  # Auth API (authorization URL + code exchange)
 ├── proxy.py                 # Proxy API implementation
-├── mcp.py                   # MCP API (transport + managed sessions)
+├── mcp.py                   # MCP API (transport + hosted)
 ├── resources/
 │   ├── base.py              # Base resource class
 │   ├── connection.py        # Connections API

@@ -1,5 +1,5 @@
 from .auth import Auth
-from .mcp import MCP, MCPClient
+from .mcp import MCP
 from .proxy import Proxy
 from .unify import Unify
 
@@ -41,4 +41,4 @@ class BundleUp:
         return MCP(self._api_key, connection_id)
 
 
-__all__ = ["Auth", "BundleUp", "MCP", "MCPClient", "Proxy", "Unify"]
+__all__ = ["Auth", "BundleUp", "MCP", "Proxy", "Unify"]

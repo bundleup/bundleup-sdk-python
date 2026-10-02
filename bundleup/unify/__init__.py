@@ -6,7 +6,6 @@ from .ticketing import Ticketing
 from .crm import CRM
 from .drive import Drive
 from .calendar import Calendar
-from .mcp import MCP
 from .me import Me
 from .types import MeResponse
 
@@ -20,7 +19,6 @@ class Unify:
         self.crm = CRM(api_key, connection_id)
         self.drive = Drive(api_key, connection_id)
         self.calendar = Calendar(api_key, connection_id)
-        self.mcp = MCP(api_key, connection_id)
         self._me = Me(api_key, connection_id)
 
     def me(self, params: Optional[Dict[str, Any]] = None) -> MeResponse:
