@@ -42,16 +42,22 @@ except Exception as error:
     print(f"Failed to fetch git repos: {error}")
 
 try:
-    tickets = unify.ticketing.tickets({"limit": 10})
-    print(f"Ticketing tickets: {len(tickets.get('data', []))}")
+    tasks = unify.tasks.tasks({"limit": 10})
+    print(f"Tasks: {len(tasks.get('data', []))}")
 
-    first = next(iter(tickets.get("data", [])), None)
+    first = next(iter(tasks.get("data", [])), None)
 
     if first:
-        ticket = unify.ticketing.ticket(first["id"])
-        print(f"Ticket {ticket['data']['id']}: {ticket['data']['title']}")
+        task = unify.tasks.task(first["id"])
+        print(f"Task {task['data']['id']}: {task['data']['title']}")
 except Exception as error:
-    print(f"Failed to fetch tickets: {error}")
+    print(f"Failed to fetch tasks: {error}")
+
+try:
+    tickets = unify.helpdesk.tickets({"limit": 10})
+    print(f"Helpdesk tickets: {len(tickets.get('data', []))}")
+except Exception as error:
+    print(f"Failed to fetch helpdesk tickets: {error}")
 
 try:
     events = unify.calendar.events({

@@ -5,7 +5,8 @@ Tests for the Unify classes.
 from bundleup.unify import Unify
 from bundleup.unify.chat import Chat
 from bundleup.unify.git import Git
-from bundleup.unify.ticketing import Ticketing
+from bundleup.unify.tasks import Tasks
+from bundleup.unify.helpdesk import Helpdesk
 from bundleup.unify.crm import CRM
 from bundleup.unify.calendar import Calendar
 from bundleup.unify.drive import Drive
@@ -21,7 +22,8 @@ class TestUnifyInitialization:
 
         assert isinstance(unify.chat, Chat)
         assert isinstance(unify.git, Git)
-        assert isinstance(unify.ticketing, Ticketing)
+        assert isinstance(unify.tasks, Tasks)
+        assert isinstance(unify.helpdesk, Helpdesk)
         assert isinstance(unify.crm, CRM)
         assert isinstance(unify.drive, Drive)
         assert isinstance(unify.calendar, Calendar)
@@ -41,12 +43,19 @@ class TestUnifyInitialization:
         assert unify.git._api_key == api_key
         assert unify.git._connection_id == connection_id
 
-    def test_ticketing_has_correct_params(self, api_key, connection_id):
-        """Test that ticketing client has correct parameters."""
+    def test_tasks_has_correct_params(self, api_key, connection_id):
+        """Test that tasks client has correct parameters."""
         unify = Unify(api_key, connection_id)
 
-        assert unify.ticketing._api_key == api_key
-        assert unify.ticketing._connection_id == connection_id
+        assert unify.tasks._api_key == api_key
+        assert unify.tasks._connection_id == connection_id
+
+    def test_helpdesk_has_correct_params(self, api_key, connection_id):
+        """Test that helpdesk client has correct parameters."""
+        unify = Unify(api_key, connection_id)
+
+        assert unify.helpdesk._api_key == api_key
+        assert unify.helpdesk._connection_id == connection_id
 
     def test_crm_has_correct_params(self, api_key, connection_id):
         """Test that crm client has correct parameters."""
@@ -157,23 +166,42 @@ class TestGitInitialization:
         assert callable(git.branches)
 
 
-class TestTicketingInitialization:
-    """Test Ticketing class initialization."""
+class TestTasksInitialization:
+    """Test Tasks class initialization."""
 
     def test_init_with_valid_params(self, api_key, connection_id):
         """Test initialization with valid API key and connection ID."""
-        ticketing = Ticketing(api_key, connection_id)
+        tasks = Tasks(api_key, connection_id)
 
-        assert ticketing._api_key == api_key
-        assert ticketing._connection_id == connection_id
-        assert ticketing.base_url == "https://unify.bundleup.io"
+        assert tasks._api_key == api_key
+        assert tasks._connection_id == connection_id
+        assert tasks.base_url == "https://unify.bundleup.io"
+
+    def test_has_tasks_method(self, api_key, connection_id):
+        """Test that Tasks has tasks method."""
+        tasks = Tasks(api_key, connection_id)
+
+        assert hasattr(tasks, 'tasks')
+        assert callable(tasks.tasks)
+
+
+class TestHelpdeskInitialization:
+    """Test Helpdesk class initialization."""
+
+    def test_init_with_valid_params(self, api_key, connection_id):
+        """Test initialization with valid API key and connection ID."""
+        helpdesk = Helpdesk(api_key, connection_id)
+
+        assert helpdesk._api_key == api_key
+        assert helpdesk._connection_id == connection_id
+        assert helpdesk.base_url == "https://unify.bundleup.io"
 
     def test_has_tickets_method(self, api_key, connection_id):
-        """Test that Ticketing has tickets method."""
-        ticketing = Ticketing(api_key, connection_id)
+        """Test that Helpdesk has tickets method."""
+        helpdesk = Helpdesk(api_key, connection_id)
 
-        assert hasattr(ticketing, 'tickets')
-        assert callable(ticketing.tickets)
+        assert hasattr(helpdesk, 'tickets')
+        assert callable(helpdesk.tickets)
 
 
 class TestCRMInitialization:
@@ -266,13 +294,15 @@ class TestUnifyBaseClass:
         """Test that base URL is correctly set."""
         chat = Chat(api_key, connection_id)
         git = Git(api_key, connection_id)
-        ticketing = Ticketing(api_key, connection_id)
+        tasks = Tasks(api_key, connection_id)
+        helpdesk = Helpdesk(api_key, connection_id)
         crm = CRM(api_key, connection_id)
         drive = Drive(api_key, connection_id)
 
         assert chat.base_url == "https://unify.bundleup.io"
         assert git.base_url == "https://unify.bundleup.io"
-        assert ticketing.base_url == "https://unify.bundleup.io"
+        assert tasks.base_url == "https://unify.bundleup.io"
+        assert helpdesk.base_url == "https://unify.bundleup.io"
         assert crm.base_url == "https://unify.bundleup.io"
         assert drive.base_url == "https://unify.bundleup.io"
 

@@ -8,7 +8,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 import responses
 
-from bundleup import BundleUp
+from bundleup import BundleUp, build_authorization_url
 from bundleup.auth import Auth
 
 REDIRECT_URI = "https://app.example.com/callback"
@@ -56,6 +56,36 @@ class TestBuildAuthorizationUrl:
     def test_missing_required(self, api_key, args, message):
         with pytest.raises(ValueError, match=message):
             Auth(api_key).build_authorization_url(*args)
+
+
+class TestStandaloneBuildAuthorizationUrl:
+    """The package-level helper needs no API key, so it can run where the key must not."""
+
+    def test_builds_without_an_api_key(self):
+        url = build_authorization_url(
+            "client_123", "github", REDIRECT_URI, external_id="user_42", state="xyz"
+        )
+        parsed = urlparse(url)
+        query = parse_qs(parsed.query)
+
+        assert parsed.netloc == "auth.bundleup.io"
+        assert parsed.path == "/authorize"
+        assert query == {
+            "client_id": ["client_123"],
+            "integration_id": ["github"],
+            "redirect_uri": [REDIRECT_URI],
+            "external_id": ["user_42"],
+            "state": ["xyz"],
+        }
+
+    def test_matches_the_auth_method(self, api_key):
+        assert build_authorization_url("client_123", "github", REDIRECT_URI) == Auth(
+            api_key
+        ).build_authorization_url("client_123", "github", REDIRECT_URI)
+
+    def test_missing_required(self):
+        with pytest.raises(ValueError, match="client_id is required"):
+            build_authorization_url("", "github", REDIRECT_URI)
 
 
 class TestGetConnectionFromCode:

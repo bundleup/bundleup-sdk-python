@@ -4,8 +4,47 @@ from urllib.parse import urlencode
 import requests
 
 
+BASE_URL = "https://auth.bundleup.io"
+
+
+def build_authorization_url(
+    client_id: str,
+    integration_id: str,
+    redirect_uri: str,
+    external_id: Optional[str] = None,
+    state: Optional[str] = None,
+) -> str:
+    """Build the hosted authorization URL to send the end user to.
+
+    Needs no API key: ``/authorize`` only takes the public client and
+    integration ids, so this is safe to call where the key must not live.
+    """
+    if not client_id:
+        raise ValueError("client_id is required")
+
+    if not integration_id:
+        raise ValueError("integration_id is required")
+
+    if not redirect_uri:
+        raise ValueError("redirect_uri is required")
+
+    params = {
+        "client_id": client_id,
+        "integration_id": integration_id,
+        "redirect_uri": redirect_uri,
+    }
+
+    if external_id:
+        params["external_id"] = external_id
+
+    if state:
+        params["state"] = state
+
+    return f"{BASE_URL}/authorize?{urlencode(params)}"
+
+
 class Auth:
-    base_url: str = "https://auth.bundleup.io"
+    base_url: str = BASE_URL
 
     def __init__(self, api_key: str):
         self._api_key = api_key
@@ -19,28 +58,9 @@ class Auth:
         state: Optional[str] = None,
     ) -> str:
         """Build the hosted authorization URL to send the end user to."""
-        if not client_id:
-            raise ValueError("client_id is required")
-
-        if not integration_id:
-            raise ValueError("integration_id is required")
-
-        if not redirect_uri:
-            raise ValueError("redirect_uri is required")
-
-        params = {
-            "client_id": client_id,
-            "integration_id": integration_id,
-            "redirect_uri": redirect_uri,
-        }
-
-        if external_id:
-            params["external_id"] = external_id
-
-        if state:
-            params["state"] = state
-
-        return f"{self.base_url}/authorize?{urlencode(params)}"
+        return build_authorization_url(
+            client_id, integration_id, redirect_uri, external_id, state
+        )
 
     def get_connection_from_code(self, code: str, redirect_uri: str) -> Dict[str, Any]:
         """Exchange the one-time code from the redirect for the connection.

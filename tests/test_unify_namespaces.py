@@ -14,7 +14,8 @@ from bundleup.unify.calendar import Calendar
 from bundleup.unify.drive import Drive
 from bundleup.unify.git import Git
 from bundleup.unify.me import Me
-from bundleup.unify.ticketing import Ticketing
+from bundleup.unify.tasks import Tasks
+from bundleup.unify.helpdesk import Helpdesk
 from bundleup.unify import Unify
 
 BASE = "https://unify.bundleup.io/v1"
@@ -218,61 +219,105 @@ class TestCalendar:
             Calendar(api_key, connection_id).events(self.WINDOW)
 
 
-class TestTicketing:
-    """ticketing/*"""
+class TestTasks:
+    """tasks/*"""
 
-    def test_fetches_tickets(self, api_key, connection_id, mock_responses):
-        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets", json=PAGE)
+    def test_fetches_tasks(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/tasks/tasks", json=PAGE)
 
-        Ticketing(api_key, connection_id).tickets()
+        Tasks(api_key, connection_id).tasks()
 
-        assert mock_responses.calls[0].request.url.startswith(f"{BASE}/ticketing/tickets")
+        assert mock_responses.calls[0].request.url.startswith(f"{BASE}/tasks/tasks")
 
     def test_raises_on_failure(self, api_key, connection_id, mock_responses):
-        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets", json={}, status=502)
+        mock_responses.add(responses.GET, f"{BASE}/tasks/tasks", json={}, status=502)
 
-        with pytest.raises(Exception, match="Failed to fetch ticketing/tickets: 502"):
-            Ticketing(api_key, connection_id).tickets()
+        with pytest.raises(Exception, match="Failed to fetch tasks/tasks: 502"):
+            Tasks(api_key, connection_id).tasks()
 
     def test_fetches_projects(self, api_key, connection_id, mock_responses):
-        mock_responses.add(responses.GET, f"{BASE}/ticketing/projects", json=PAGE)
+        mock_responses.add(responses.GET, f"{BASE}/tasks/projects", json=PAGE)
 
-        Ticketing(api_key, connection_id).projects({"limit": 5, "after": "cursor_1"})
+        Tasks(api_key, connection_id).projects({"limit": 5, "after": "cursor_1"})
 
         url = mock_responses.calls[0].request.url
-        assert url.startswith(f"{BASE}/ticketing/projects")
+        assert url.startswith(f"{BASE}/tasks/projects")
         assert "limit=5" in url
         assert "after=cursor_1" in url
 
     def test_raises_when_projects_fails(self, api_key, connection_id, mock_responses):
-        mock_responses.add(responses.GET, f"{BASE}/ticketing/projects", json={}, status=502)
+        mock_responses.add(responses.GET, f"{BASE}/tasks/projects", json={}, status=502)
 
-        with pytest.raises(Exception, match="Failed to fetch ticketing/projects: 502"):
-            Ticketing(api_key, connection_id).projects()
+        with pytest.raises(Exception, match="Failed to fetch tasks/projects: 502"):
+            Tasks(api_key, connection_id).projects()
+
+    def test_fetches_a_single_task(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/tasks/tasks/TKT-1", json={"data": {}})
+
+        Tasks(api_key, connection_id).task("TKT-1")
+
+        assert mock_responses.calls[0].request.url.startswith(f"{BASE}/tasks/tasks/TKT-1")
+
+    def test_encodes_the_task_id(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/tasks/tasks/a%2Fb", json={"data": {}})
+
+        Tasks(api_key, connection_id).task("a/b")
+
+        assert "tasks/tasks/a%2Fb" in mock_responses.calls[0].request.url
+
+    def test_requires_a_task_id(self, api_key, connection_id):
+        with pytest.raises(ValueError, match="task_id is required"):
+            Tasks(api_key, connection_id).task("")
+
+    def test_raises_when_a_single_task_fails(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/tasks/tasks/TKT-1", json={}, status=404)
+
+        with pytest.raises(Exception, match="Failed to fetch tasks/tasks/TKT-1: 404"):
+            Tasks(api_key, connection_id).task("TKT-1")
+
+
+class TestHelpdesk:
+    """helpdesk/*"""
+
+    def test_fetches_tickets(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/helpdesk/tickets", json=PAGE)
+
+        Helpdesk(api_key, connection_id).tickets({"limit": 5, "after": "cursor_1"})
+
+        url = mock_responses.calls[0].request.url
+        assert url.startswith(f"{BASE}/helpdesk/tickets")
+        assert "limit=5" in url
+        assert "after=cursor_1" in url
+
+    def test_raises_on_failure(self, api_key, connection_id, mock_responses):
+        mock_responses.add(responses.GET, f"{BASE}/helpdesk/tickets", json={}, status=502)
+
+        with pytest.raises(Exception, match="Failed to fetch helpdesk/tickets: 502"):
+            Helpdesk(api_key, connection_id).tickets()
 
     def test_fetches_a_single_ticket(self, api_key, connection_id, mock_responses):
-        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets/TKT-1", json={"data": {}})
+        mock_responses.add(responses.GET, f"{BASE}/helpdesk/tickets/4182", json={"data": {}})
 
-        Ticketing(api_key, connection_id).ticket("TKT-1")
+        Helpdesk(api_key, connection_id).ticket("4182")
 
-        assert mock_responses.calls[0].request.url.startswith(f"{BASE}/ticketing/tickets/TKT-1")
+        assert mock_responses.calls[0].request.url.startswith(f"{BASE}/helpdesk/tickets/4182")
 
     def test_encodes_the_ticket_id(self, api_key, connection_id, mock_responses):
-        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets/a%2Fb", json={"data": {}})
+        mock_responses.add(responses.GET, f"{BASE}/helpdesk/tickets/a%2Fb", json={"data": {}})
 
-        Ticketing(api_key, connection_id).ticket("a/b")
+        Helpdesk(api_key, connection_id).ticket("a/b")
 
-        assert "ticketing/tickets/a%2Fb" in mock_responses.calls[0].request.url
+        assert "helpdesk/tickets/a%2Fb" in mock_responses.calls[0].request.url
 
     def test_requires_a_ticket_id(self, api_key, connection_id):
         with pytest.raises(ValueError, match="ticket_id is required"):
-            Ticketing(api_key, connection_id).ticket("")
+            Helpdesk(api_key, connection_id).ticket("")
 
     def test_raises_when_a_single_ticket_fails(self, api_key, connection_id, mock_responses):
-        mock_responses.add(responses.GET, f"{BASE}/ticketing/tickets/TKT-1", json={}, status=404)
+        mock_responses.add(responses.GET, f"{BASE}/helpdesk/tickets/4182", json={}, status=404)
 
-        with pytest.raises(Exception, match="Failed to fetch ticketing/tickets/TKT-1: 404"):
-            Ticketing(api_key, connection_id).ticket("TKT-1")
+        with pytest.raises(Exception, match="Failed to fetch helpdesk/tickets/4182: 404"):
+            Helpdesk(api_key, connection_id).ticket("4182")
 
 
 SCOPED = ["pulls", "issues", "tags", "releases", "branches", "commits"]

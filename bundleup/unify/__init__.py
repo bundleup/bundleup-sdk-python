@@ -2,7 +2,8 @@ from typing import Any, Dict, Optional
 
 from .chat import Chat
 from .git import Git
-from .ticketing import Ticketing
+from .tasks import Tasks
+from .helpdesk import Helpdesk
 from .crm import CRM
 from .drive import Drive
 from .calendar import Calendar
@@ -15,7 +16,8 @@ class Unify:
         # Initialize
         self.chat = Chat(api_key, connection_id)
         self.git = Git(api_key, connection_id)
-        self.ticketing = Ticketing(api_key, connection_id)
+        self.tasks = Tasks(api_key, connection_id)
+        self.helpdesk = Helpdesk(api_key, connection_id)
         self.crm = CRM(api_key, connection_id)
         self.drive = Drive(api_key, connection_id)
         self.calendar = Calendar(api_key, connection_id)

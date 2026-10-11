@@ -238,9 +238,9 @@ class CommitsResponse(TypedDict):
     metadata: Metadata
 
 
-# Project Management
+# Tasks
 
-class TicketingTicket(TypedDict):
+class Task(TypedDict):
     id: str
     title: str
     status: str
@@ -250,12 +250,12 @@ class TicketingTicket(TypedDict):
     updated_at: str
 
 
-class TicketsResponse(TypedDict):
-    data: List[TicketingTicket]
+class TasksResponse(TypedDict):
+    data: List[Task]
     metadata: Metadata
 
 
-class TicketingProject(TypedDict):
+class Project(TypedDict):
     id: str
     name: str
     status: Optional[str]
@@ -266,11 +266,11 @@ class TicketingProject(TypedDict):
 
 
 class ProjectsResponse(TypedDict):
-    data: List[TicketingProject]
+    data: List[Project]
     metadata: Metadata
 
 
-class Ticket(TypedDict):
+class SingleTask(TypedDict):
     id: str
     title: str
     status: Optional[str]
@@ -278,6 +278,36 @@ class Ticket(TypedDict):
     description: Optional[str]
     created_at: Optional[str]
     updated_at: Optional[str]
+
+
+# A single resource carries no pagination, so this is not a paginated response.
+class TaskResponse(TypedDict):
+    data: SingleTask
+
+
+# Helpdesk
+
+class TicketRequester(TypedDict):
+    id: Optional[str]
+    name: Optional[str]
+    email: Optional[str]
+
+
+class Ticket(TypedDict):
+    id: str
+    title: Optional[str]
+    description: Optional[str]
+    status: Optional[str]
+    priority: Optional[str]
+    requester: Optional[TicketRequester]
+    url: Optional[str]
+    created_at: Optional[str]
+    updated_at: Optional[str]
+
+
+class TicketsResponse(TypedDict):
+    data: List[Ticket]
+    metadata: Metadata
 
 
 # A single resource carries no pagination, so this is not a paginated response.

@@ -72,8 +72,10 @@ class TestBundleUpUnify:
         assert unify.chat._connection_id == connection_id
         assert unify.git._api_key == api_key
         assert unify.git._connection_id == connection_id
-        assert unify.ticketing._api_key == api_key
-        assert unify.ticketing._connection_id == connection_id
+        assert unify.tasks._api_key == api_key
+        assert unify.tasks._connection_id == connection_id
+        assert unify.helpdesk._api_key == api_key
+        assert unify.helpdesk._connection_id == connection_id
 
     def test_unify_without_connection_id(self, api_key):
         """Test creating a unify client without connection ID raises exception."""
